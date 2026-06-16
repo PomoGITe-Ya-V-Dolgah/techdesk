@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}{{ equipment.name }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">{{ equipment.name }}</h1>
+    <p class="page-subtitle">Инвентарный номер: {{ equipment.inventory_number }} · {{ equipment.location }}</p>
+  </div>
+  <div class="btn-group">
+    <a class="btn btn-primary" href="{{ create_url }}">Создать заявку</a>
+    <a class="btn btn-outline-secondary" href="{% url 'equipment_update' equipment.pk %}">Редактировать</a>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-4">
+    <div class="card qr-card">
+      <div class="card-body">
+        <h2 class="h5">QR-паспорт</h2>
+        <img class="qr-img" src="{% url 'equipment_qr' equipment.pk %}" alt="QR-код оборудования">
+        <p class="small text-muted">QR-код открывает форму создания заявки с уже выбранным оборудованием.</p>
+      </div>
+    </div>
+    <div class="card mt-3">
+      <div class="card-body">
+        <h2 class="h5">Параметры</h2>
+        <dl class="definition-grid mb-0">
+          <dt>Категория</dt><dd>{{ equipment.category }}</dd>
+          <dt>Место установки</dt><dd>{{ equipment.location }}</dd>
+          <dt>Критичность</dt><dd>{{ equipment.get_criticality_display }}</dd>
+          <dt>Модель</dt><dd>{{ equipment.model|default:"не указана" }}</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-8">
+    <div class="card mb-4">
+      <div class="card-header">История заявок</div>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead><tr><th>ID</th><th>Тема</th><th>Статус</th><th>Решение</th></tr></thead>
+          <tbody>
+            {% for ticket in tickets %}
+              <tr>
+                <td>#{{ ticket.id }}</td>
+                <td><a class="queue-title" href="{{ ticket.get_absolute_url }}">{{ ticket.title }}</a></td>
+                <td><span class="status-pill status-{{ ticket.status }}">{{ ticket.get_status_display }}</span></td>
+                <td>{{ ticket.resolution_summary|truncatechars:90|default:"-" }}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="4" class="text-muted">История пока пустая.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">База решений по оборудованию</div>
+      <div class="list-group list-group-flush">
+        {% for solution in solutions %}
+          <div class="list-group-item recommendation">
+            <div class="fw-semibold">{{ solution.title }}</div>
+            <div class="text-muted small">{{ solution.resolution_steps|truncatechars:180 }}</div>
+          </div>
+        {% empty %}
+          <div class="list-group-item text-muted">Пока нет закрытых решений.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

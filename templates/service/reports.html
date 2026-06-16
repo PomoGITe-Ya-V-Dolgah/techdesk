@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% load service_extras %}
+
+{% block title %}Отчеты{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">Отчеты</h1>
+    <p class="page-subtitle">Контроль нагрузки, повторяемости проблем и состояния очереди заявок.</p>
+  </div>
+  <a class="btn btn-outline-primary" href="{% url 'reports_export_csv' %}">Экспорт CSV</a>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-header">Заявки по статусам</div>
+      <table class="table mb-0">
+        {% for row in status_rows %}
+          <tr><td>{{ status_labels|get_item:row.status }}</td><td class="text-end">{{ row.count }}</td></tr>
+        {% empty %}
+          <tr><td class="text-muted">Нет данных.</td></tr>
+        {% endfor %}
+      </table>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-header">Оборудование по обращениям</div>
+      <table class="table mb-0">
+        {% for item in equipment_rows %}
+          <tr><td>{{ item.name }}</td><td class="text-end">{{ item.ticket_count }}</td></tr>
+        {% empty %}
+          <tr><td class="text-muted">Нет данных.</td></tr>
+        {% endfor %}
+      </table>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-header">Нагрузка инженеров</div>
+      <table class="table mb-0">
+        {% for engineer in engineer_rows %}
+          <tr><td>{{ engineer.get_full_name|default:engineer.username }}</td><td class="text-end">{{ engineer.ticket_count }}</td></tr>
+        {% empty %}
+          <tr><td class="text-muted">Нет данных.</td></tr>
+        {% endfor %}
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

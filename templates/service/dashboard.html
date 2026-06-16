@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Панель управления{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">Панель управления</h1>
+    <p class="page-subtitle">Оперативная картина по заявкам, оборудованию и базе решений технического отдела.</p>
+  </div>
+  <a class="btn btn-primary" href="{% url 'ticket_create' %}">Создать заявку</a>
+</div>
+
+<div class="metric-grid">
+  <div class="metric">
+    <div class="metric-label">Открытые заявки</div>
+    <div class="metric-value">{{ open_count }}</div>
+    <div class="metric-hint">требуют контроля</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">Просроченные</div>
+    <div class="metric-value">{{ overdue_count }}</div>
+    <div class="metric-hint">нарушен срок SLA</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">Оборудование</div>
+    <div class="metric-value">{{ equipment_count }}</div>
+    <div class="metric-hint">на обслуживании</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">База опыта</div>
+    <div class="metric-value">{{ top_equipment|length }}</div>
+    <div class="metric-hint">объектов с историей</div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header">Последние заявки</div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead><tr><th>ID</th><th>Тема</th><th>Оборудование</th><th>Статус</th><th>Исполнитель</th></tr></thead>
+          <tbody>
+            {% for ticket in recent_tickets %}
+              <tr>
+                <td>#{{ ticket.id }}</td>
+                <td><a class="queue-title" href="{{ ticket.get_absolute_url }}">{{ ticket.title }}</a></td>
+                <td><span class="muted-line">{{ ticket.equipment.name }}</span></td>
+                <td><span class="status-pill status-{{ ticket.status }}">{{ ticket.get_status_display }}</span></td>
+                <td><span class="muted-line">{{ ticket.assignee|default:"не назначен" }}</span></td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="5" class="text-muted">Заявок пока нет.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-header">Оборудование с частыми обращениями</div>
+      <div class="list-group list-group-flush">
+        {% for item in top_equipment %}
+          <a class="list-group-item list-group-item-action d-flex justify-content-between" href="{{ item.get_absolute_url }}">
+            <span>{{ item.name }}</span>
+            <span class="badge text-bg-primary">{{ item.ticket_count }}</span>
+          </a>
+        {% empty %}
+          <div class="list-group-item text-muted">Нет данных.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

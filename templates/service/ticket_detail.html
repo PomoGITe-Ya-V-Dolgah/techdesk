@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Заявка #{{ ticket.id }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">#{{ ticket.id }} {{ ticket.title }}</h1>
+    <p class="page-subtitle">
+      {{ ticket.equipment }} ·
+      <span class="status-pill status-{{ ticket.status }}">{{ ticket.get_status_display }}</span>
+      <span class="priority-pill priority-{{ ticket.priority }}">{{ ticket.get_priority_display }}</span>
+    </p>
+  </div>
+  <div class="btn-group">
+    <a class="btn btn-outline-primary" href="{% url 'ticket_assign' ticket.pk %}">Назначить</a>
+    <a class="btn btn-primary" href="{% url 'ticket_status' ticket.pk %}">Изменить статус</a>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="card mb-4">
+      <div class="card-body">
+        <h2 class="h5">Описание проблемы</h2>
+        <p>{{ ticket.description|linebreaksbr }}</p>
+        {% if ticket.resolution_summary %}
+          <hr>
+          <h2 class="h5">Итоговое решение</h2>
+          <p>{{ ticket.resolution_summary|linebreaksbr }}</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">Ход работ</div>
+      <div class="card-body pb-0">
+        {% for comment in comments %}
+          <div class="timeline-item">
+            <div class="small text-muted">{{ comment.author }} · {{ comment.created_at|date:"d.m.Y H:i" }}</div>
+            <div>{{ comment.text|linebreaksbr }}</div>
+          </div>
+        {% empty %}
+          <div class="text-muted mb-3">Комментариев пока нет.</div>
+        {% endfor %}
+      </div>
+      <div class="card-body border-top">
+        <form method="post" class="comment-form">
+          {% csrf_token %}
+          <label class="form-label" for="{{ comment_form.text.id_for_label }}">Комментарий</label>
+          {{ comment_form.text }}
+          {{ comment_form.text.errors }}
+          <button class="btn btn-outline-primary">Добавить комментарий</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card mb-4">
+      <div class="card-header">Оборудование</div>
+      <div class="card-body">
+        <a class="fw-semibold" href="{{ ticket.equipment.get_absolute_url }}">{{ ticket.equipment.name }}</a>
+        <div class="text-muted small">{{ ticket.equipment.inventory_number }}</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">Похожие решения из истории</div>
+      <div class="list-group list-group-flush">
+        {% for item in recommendations %}
+          <div class="list-group-item recommendation">
+            <div class="d-flex justify-content-between">
+              <strong>{{ item.solution.title }}</strong>
+              <span class="score-badge">{{ item.score }}</span>
+            </div>
+            <div class="small text-muted">{{ item.reason }}</div>
+            <div class="mt-2">{{ item.solution.resolution_steps|truncatechars:180 }}</div>
+          </div>
+        {% empty %}
+          <div class="list-group-item text-muted">Похожих решений пока нет.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

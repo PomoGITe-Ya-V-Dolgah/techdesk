@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Оборудование{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">Оборудование</h1>
+    <p class="page-subtitle">Паспорта оборудования, QR-коды и история обслуживания.</p>
+  </div>
+  <a class="btn btn-primary" href="{% url 'equipment_create' %}">Добавить оборудование</a>
+</div>
+
+<form class="toolbar row g-2">
+  <div class="col-md-10"><input class="form-control" name="q" value="{{ query }}" placeholder="Поиск по названию, инвентарному номеру, модели"></div>
+  <div class="col-md-2"><button class="btn btn-outline-primary w-100">Найти</button></div>
+</form>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead><tr><th>Название</th><th>Инвентарный номер</th><th>Категория</th><th>Место</th><th>Критичность</th></tr></thead>
+      <tbody>
+        {% for item in equipment %}
+          <tr>
+            <td><a class="queue-title" href="{{ item.get_absolute_url }}">{{ item.name }}</a></td>
+            <td>{{ item.inventory_number }}</td>
+            <td>{{ item.category }}</td>
+            <td>{{ item.location }}</td>
+            <td><span class="priority-pill priority-{{ item.criticality }}">{{ item.get_criticality_display }}</span></td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="5" class="text-muted">Оборудование не найдено.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

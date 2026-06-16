@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Вход{% endblock %}
+
+{% block content %}
+<div class="auth-layout">
+  <section class="auth-panel">
+    <div class="auth-brand">
+      <span class="brand-mark">SD</span>
+      <div>
+        <strong>Service Desk ТО</strong>
+        <span>учет заявок и база решений</span>
+      </div>
+    </div>
+
+    <h1>Вход в систему</h1>
+    <p class="auth-subtitle">Используйте демо-аккаунт нужной роли для проверки сценариев ВКР.</p>
+
+    <form method="post" class="auth-form">
+      {% csrf_token %}
+      {% if form.non_field_errors %}
+        <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+      {% endif %}
+
+      <div class="mb-3">
+        <label class="form-label" for="{{ form.username.id_for_label }}">Имя пользователя</label>
+        <input class="form-control form-control-lg" type="text" name="{{ form.username.html_name }}" id="{{ form.username.id_for_label }}" autocomplete="username" autofocus required>
+        {{ form.username.errors }}
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label" for="{{ form.password.id_for_label }}">Пароль</label>
+        <input class="form-control form-control-lg" type="password" name="{{ form.password.html_name }}" id="{{ form.password.id_for_label }}" autocomplete="current-password" required>
+        {{ form.password.errors }}
+      </div>
+
+      <button class="btn btn-primary btn-lg w-100">Войти</button>
+    </form>
+
+    <div class="demo-logins">
+      <div class="demo-title">Демо-доступы</div>
+      <div class="demo-grid">
+        <span>admin</span><code>admin123</code>
+        <span>operator</span><code>operator123</code>
+        <span>engineer</span><code>engineer123</code>
+        <span>manager</span><code>manager123</code>
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}

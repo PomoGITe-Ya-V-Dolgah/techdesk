@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="form-page">
+  <div class="form-card">
+    <div class="form-card-head">
+      <div>
+        <h1>{{ title }}</h1>
+        <p>Заполните поля и сохраните изменения. Обязательные поля отмечены автоматически браузером.</p>
+      </div>
+    </div>
+
+    <form method="post" class="app-form">
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+        <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+      {% endif %}
+
+      <div class="form-grid">
+        {% for field in form %}
+          <div class="form-field {% if field.field.widget.input_type == 'textarea' %}form-field-wide{% endif %}">
+            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.help_text %}
+              <div class="form-help">{{ field.help_text }}</div>
+            {% endif %}
+            {% if field.errors %}
+              <div class="form-errors">{{ field.errors }}</div>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+
+      <div class="form-actions">
+        <button class="btn btn-primary">{{ submit }}</button>
+        <a class="btn btn-outline-secondary" href="javascript:history.back()">Назад</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
