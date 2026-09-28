@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load service_extras %}
 
 {% block title %}Заявка #{{ ticket.id }}{% endblock %}
 
@@ -7,15 +8,17 @@
   <div>
     <h1 class="page-title">#{{ ticket.id }} {{ ticket.title }}</h1>
     <p class="page-subtitle">
-      {{ ticket.equipment }} ·
+      {{ ticket.equipment|default:"Без привязки к оборудованию" }} · {{ ticket.reporter|person }} ·
       <span class="status-pill status-{{ ticket.status }}">{{ ticket.get_status_display }}</span>
       <span class="priority-pill priority-{{ ticket.priority }}">{{ ticket.get_priority_display }}</span>
     </p>
   </div>
+  {% if is_support %}
   <div class="btn-group">
-    <a class="btn btn-outline-primary" href="{% url 'ticket_assign' ticket.pk %}">Назначить</a>
-    <a class="btn btn-primary" href="{% url 'ticket_status' ticket.pk %}">Изменить статус</a>
+    {% if current_role != "engineer" %}<a class="btn btn-outline-primary" href="{% url 'ticket_assign' ticket.pk %}">Назначить</a>{% endif %}
+    {% if current_role != "operator" %}<a class="btn btn-primary" href="{% url 'ticket_status' ticket.pk %}">Изменить статус</a>{% endif %}
   </div>
+  {% endif %}
 </div>
 
 <div class="row g-4">
@@ -59,10 +62,16 @@
     <div class="card mb-4">
       <div class="card-header">Оборудование</div>
       <div class="card-body">
-        <a class="fw-semibold" href="{{ ticket.equipment.get_absolute_url }}">{{ ticket.equipment.name }}</a>
-        <div class="text-muted small">{{ ticket.equipment.inventory_number }}</div>
+        {% if ticket.equipment %}
+          <a class="fw-semibold" href="{{ ticket.equipment.get_absolute_url }}">{{ ticket.equipment.name }}</a>
+          <div class="text-muted small">{{ ticket.equipment.inventory_number }} · {{ ticket.equipment.location }}</div>
+        {% else %}
+          <span class="text-muted">Не указано</span>
+        {% endif %}
+        <div class="text-muted small mt-2">Исполнитель: {{ ticket.assignee|person:"не назначен" }}</div>
       </div>
     </div>
+    {% if is_support %}
     <div class="card">
       <div class="card-header">Похожие решения из истории</div>
       <div class="list-group list-group-flush">
@@ -80,6 +89,7 @@
         {% endfor %}
       </div>
     </div>
+    {% endif %}
   </div>
 </div>
 {% endblock %}

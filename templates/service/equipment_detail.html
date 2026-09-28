@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load service_extras %}
 
 {% block title %}{{ equipment.name }}{% endblock %}
 
@@ -6,11 +7,11 @@
 <div class="page-head">
   <div>
     <h1 class="page-title">{{ equipment.name }}</h1>
-    <p class="page-subtitle">Инвентарный номер: {{ equipment.inventory_number }} · {{ equipment.location }}</p>
+    <p class="page-subtitle">Инвентарный номер: {{ equipment.inventory_number }} · {{ equipment.location }} · {{ equipment.get_status_display }}</p>
   </div>
   <div class="btn-group">
     <a class="btn btn-primary" href="{{ create_url }}">Создать заявку</a>
-    <a class="btn btn-outline-secondary" href="{% url 'equipment_update' equipment.pk %}">Редактировать</a>
+    {% if can_edit_registry %}<a class="btn btn-outline-secondary" href="{% url 'equipment_update' equipment.pk %}">Редактировать</a>{% endif %}
   </div>
 </div>
 
@@ -29,13 +30,82 @@
         <dl class="definition-grid mb-0">
           <dt>Категория</dt><dd>{{ equipment.category }}</dd>
           <dt>Место установки</dt><dd>{{ equipment.location }}</dd>
-          <dt>Критичность</dt><dd>{{ equipment.get_criticality_display }}</dd>
+          <dt>Сотрудник</dt><dd>{{ equipment.assigned_user|person:"не закреплено" }}</dd>
+          <dt>Подразделение</dt><dd>{{ equipment.department|default:"—" }}</dd>
+          <dt>Производитель</dt><dd>{{ equipment.manufacturer|default:"—" }}</dd>
           <dt>Модель</dt><dd>{{ equipment.model|default:"не указана" }}</dd>
+          <dt>Серийный номер</dt><dd>{{ equipment.serial_number|default:"—" }}</dd>
+          <dt>Критичность</dt><dd>{{ equipment.get_criticality_display }}</dd>
+          {% if equipment.parent %}<dt>Подключено к</dt><dd><a href="{{ equipment.parent.get_absolute_url }}">{{ equipment.parent }}</a></dd>{% endif %}
+          {% if equipment.purchase_date %}<dt>Куплено</dt><dd>{{ equipment.purchase_date|date:"d.m.Y" }}</dd>{% endif %}
+          {% if equipment.warranty_until %}<dt>Гарантия до</dt><dd>{{ equipment.warranty_until|date:"d.m.Y" }}</dd>{% endif %}
+        </dl>
+        {% if equipment.notes %}<p class="small text-muted mt-3 mb-0">{{ equipment.notes|linebreaksbr }}</p>{% endif %}
+      </div>
+    </div>
+    {% if is_support and equipment.hostname or is_support and equipment.ip_address or is_support and equipment.operating_system %}
+    <div class="card mt-3">
+      <div class="card-body">
+        <h2 class="h5">Сеть и система</h2>
+        <dl class="definition-grid mb-0">
+          <dt>Имя в сети</dt><dd>{{ equipment.hostname|default:"—" }}</dd>
+          <dt>IP-адрес</dt><dd>{{ equipment.ip_address|default:"—" }}</dd>
+          <dt>MAC-адрес</dt><dd>{{ equipment.mac_address|default:"—" }}</dd>
+          <dt>ОС</dt><dd>{{ equipment.operating_system|default:"—" }}</dd>
         </dl>
       </div>
     </div>
+    {% endif %}
+    {% if children %}
+    <div class="card mt-3">
+      <div class="card-header">Подключено к этому устройству</div>
+      <div class="list-group list-group-flush">
+        {% for child in children %}
+          <a class="list-group-item list-group-item-action" href="{{ child.get_absolute_url }}">{{ child.name }} <span class="small text-muted">· {{ child.category }}</span></a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
   </div>
   <div class="col-lg-8">
+    <div class="card mb-4">
+      <div class="card-header">Установленное ПО</div>
+      <div class="table-responsive">
+        <table class="table mb-0">
+          <thead><tr><th>Программа</th><th>Версия</th><th>Лицензия до</th>{% if can_edit_registry %}<th></th>{% endif %}</tr></thead>
+          <tbody>
+            {% for inst in installations %}
+              <tr>
+                <td>{{ inst.software.name }}</td>
+                <td>{{ inst.version|default:"—" }}</td>
+                <td>{{ inst.license_until|date:"d.m.Y"|default:"—" }}</td>
+                {% if can_edit_registry %}
+                <td class="text-end">
+                  <form method="post" action="{% url 'equipment_software_remove' equipment.pk inst.pk %}">
+                    {% csrf_token %}<button class="btn btn-sm btn-light">Убрать</button>
+                  </form>
+                </td>
+                {% endif %}
+              </tr>
+            {% empty %}
+              <tr><td colspan="4" class="text-muted">ПО не указано.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% if can_edit_registry %}
+      <div class="card-body border-top">
+        <form method="post" action="{% url 'equipment_software_add' equipment.pk %}" class="row g-2 align-items-end">
+          {% csrf_token %}
+          <div class="col-md-4"><label class="form-label small" for="{{ software_form.software.id_for_label }}">Программа</label>{{ software_form.software }}</div>
+          <div class="col-md-2"><label class="form-label small" for="{{ software_form.version.id_for_label }}">Версия</label>{{ software_form.version }}</div>
+          <div class="col-md-3"><label class="form-label small" for="{{ software_form.license_until.id_for_label }}">Лицензия до</label>{{ software_form.license_until }}</div>
+          <div class="col-md-3"><button class="btn btn-outline-primary w-100">Добавить</button></div>
+          <datalist id="software-names">{% for name in software_names %}<option value="{{ name }}">{% endfor %}</datalist>
+        </form>
+      </div>
+      {% endif %}
+    </div>
     <div class="card mb-4">
       <div class="card-header">История заявок</div>
       <div class="table-responsive">
@@ -56,6 +126,7 @@
         </table>
       </div>
     </div>
+    {% if is_support %}
     <div class="card">
       <div class="card-header">База решений по оборудованию</div>
       <div class="list-group list-group-flush">
@@ -69,6 +140,7 @@
         {% endfor %}
       </div>
     </div>
+    {% endif %}
   </div>
 </div>
 {% endblock %}

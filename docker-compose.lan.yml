@@ -1,0 +1,34 @@
+# Полный запуск techdesk в локальной сети: веб-приложение + PostgreSQL.
+#   python3 deploy/make_env.py <IP-сервера> --postgres
+#   docker compose -f docker-compose.lan.yml up -d --build
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      retries: 10
+    # Порт базы наружу не открываем — к ней обращается только web.
+
+  web:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      POSTGRES_HOST: db
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${TECHDESK_PORT:-8000}:8000"
+
+volumes:
+  postgres_data:

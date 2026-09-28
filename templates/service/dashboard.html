@@ -5,12 +5,13 @@
 {% block content %}
 <div class="page-head">
   <div>
-    <h1 class="page-title">Панель управления</h1>
-    <p class="page-subtitle">Оперативная картина по заявкам, оборудованию и базе решений технического отдела.</p>
+    <h1 class="page-title">{% if is_support %}Панель управления{% else %}Мои заявки{% endif %}</h1>
+    <p class="page-subtitle">{% if is_support %}Оперативная картина по заявкам, оборудованию и базе решений технического отдела.{% else %}Ваши обращения в технический отдел и закрепленная за вами техника.{% endif %}</p>
   </div>
   <a class="btn btn-primary" href="{% url 'ticket_create' %}">Создать заявку</a>
 </div>
 
+{% if is_support %}
 <div class="metric-grid">
   <div class="metric">
     <div class="metric-label">Открытые заявки</div>
@@ -33,11 +34,12 @@
     <div class="metric-hint">объектов с историей</div>
   </div>
 </div>
+{% endif %}
 
 <div class="row g-4">
   <div class="col-lg-8">
     <div class="card">
-      <div class="card-header">Последние заявки</div>
+      <div class="card-header">{% if is_support %}Последние заявки{% else %}Мои заявки — открытых: {{ open_count }}{% endif %}</div>
       <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
           <thead><tr><th>ID</th><th>Тема</th><th>Оборудование</th><th>Статус</th><th>Исполнитель</th></tr></thead>
@@ -46,7 +48,7 @@
               <tr>
                 <td>#{{ ticket.id }}</td>
                 <td><a class="queue-title" href="{{ ticket.get_absolute_url }}">{{ ticket.title }}</a></td>
-                <td><span class="muted-line">{{ ticket.equipment.name }}</span></td>
+                <td><span class="muted-line">{{ ticket.equipment.name|default:"—" }}</span></td>
                 <td><span class="status-pill status-{{ ticket.status }}">{{ ticket.get_status_display }}</span></td>
                 <td><span class="muted-line">{{ ticket.assignee|default:"не назначен" }}</span></td>
               </tr>
@@ -59,6 +61,20 @@
     </div>
   </div>
   <div class="col-lg-4">
+    {% if my_equipment %}
+    <div class="card mb-4">
+      <div class="card-header">Закреплено за мной</div>
+      <div class="list-group list-group-flush">
+        {% for item in my_equipment %}
+          <a class="list-group-item list-group-item-action" href="{{ item.get_absolute_url }}">
+            <div>{{ item.name }}</div>
+            <div class="small text-muted">{{ item.inventory_number }} · {{ item.location }}</div>
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+    {% if is_support %}
     <div class="card">
       <div class="card-header">Оборудование с частыми обращениями</div>
       <div class="list-group list-group-flush">
@@ -72,6 +88,7 @@
         {% endfor %}
       </div>
     </div>
+    {% endif %}
   </div>
 </div>
 {% endblock %}

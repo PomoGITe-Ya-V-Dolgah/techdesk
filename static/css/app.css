@@ -582,8 +582,9 @@ a {
 
 .definition-grid {
   display: grid;
-  gap: 12px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 12px;
+  grid-template-columns: 120px minmax(0, 1fr);
+  align-items: baseline;
 }
 
 .definition-grid dt {
@@ -592,7 +593,8 @@ a {
 }
 
 .definition-grid dd {
-  font-weight: 700;
+  font-weight: 600;
+  overflow-wrap: anywhere;
   margin: 2px 0 0;
 }
 
@@ -650,4 +652,19 @@ a {
   }
   .metric-grid,
   .definition-grid { grid-template-columns: 1fr; }
+}
+
+/* QR-наклейки для печати */
+.label-sheet { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+.qr-label { display: flex; gap: 10px; align-items: center; border: 1px dashed #b8c2d0; border-radius: 8px; padding: 8px; background: #fff; break-inside: avoid; }
+.qr-label img { width: 88px; height: 88px; flex: none; }
+.qr-label strong { display: block; font-size: 14px; }
+.qr-label span { display: block; font-size: 12px; }
+.qr-label small { display: block; font-size: 10px; color: #6b7280; margin-top: 4px; }
+
+@media print {
+  .app-sidebar, .topbar, .no-print, .alert { display: none !important; }
+  .app-shell, .app-main, .content-shell { display: block !important; padding: 0 !important; margin: 0 !important; }
+  .label-sheet { grid-template-columns: repeat(3, 1fr); gap: 4mm; }
+  body { background: #fff !important; }
 }

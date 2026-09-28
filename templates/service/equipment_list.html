@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load service_extras %}
 
 {% block title %}Оборудование{% endblock %}
 
@@ -6,31 +7,58 @@
 <div class="page-head">
   <div>
     <h1 class="page-title">Оборудование</h1>
-    <p class="page-subtitle">Паспорта оборудования, QR-коды и история обслуживания.</p>
+    <p class="page-subtitle">Реестр техники: где стоит, кто работает, какое ПО установлено, история обслуживания.</p>
   </div>
-  <a class="btn btn-primary" href="{% url 'equipment_create' %}">Добавить оборудование</a>
+  {% if can_edit_registry %}
+  <div class="d-flex flex-wrap gap-2 justify-content-end">
+    <a class="btn btn-primary" href="{% url 'equipment_create' %}">Добавить</a>
+    <a class="btn btn-outline-secondary" href="{% url 'equipment_import' %}">Импорт из Excel</a>
+    <a class="btn btn-outline-secondary" href="{% url 'equipment_labels' %}">QR-наклейки</a>
+    <a class="btn btn-outline-secondary" href="{% url 'equipment_export_csv' %}">CSV</a>
+  </div>
+  {% endif %}
 </div>
 
 <form class="toolbar row g-2">
-  <div class="col-md-10"><input class="form-control" name="q" value="{{ query }}" placeholder="Поиск по названию, инвентарному номеру, модели"></div>
+  <div class="col-md-4"><input class="form-control" name="q" value="{{ query }}" placeholder="Название, инв. номер, сотрудник, имя ПК, IP, программа"></div>
+  <div class="col-md-2">
+    <select class="form-select" name="category">
+      <option value="">Все категории</option>
+      {% for item in categories %}<option value="{{ item.id }}" {% if filters.category == item.id|stringformat:"s" %}selected{% endif %}>{{ item.name }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2">
+    <select class="form-select" name="location">
+      <option value="">Все кабинеты</option>
+      {% for item in locations %}<option value="{{ item.id }}" {% if filters.location == item.id|stringformat:"s" %}selected{% endif %}>{{ item }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2">
+    <select class="form-select" name="status">
+      <option value="">В учете (без списанных)</option>
+      {% for value, label in statuses %}<option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+  </div>
   <div class="col-md-2"><button class="btn btn-outline-primary w-100">Найти</button></div>
 </form>
 
 <div class="card">
   <div class="table-responsive">
     <table class="table table-hover align-middle mb-0">
-      <thead><tr><th>Название</th><th>Инвентарный номер</th><th>Категория</th><th>Место</th><th>Критичность</th></tr></thead>
+      <thead><tr><th>Название</th><th>Инв. номер</th><th>Категория</th><th>Место</th><th>Сотрудник</th>{% if is_support %}<th>Имя ПК / IP</th>{% endif %}<th>Статус</th></tr></thead>
       <tbody>
         {% for item in equipment %}
           <tr>
             <td><a class="queue-title" href="{{ item.get_absolute_url }}">{{ item.name }}</a></td>
-            <td>{{ item.inventory_number }}</td>
+            <td class="text-nowrap">{{ item.inventory_number }}</td>
             <td>{{ item.category }}</td>
             <td>{{ item.location }}</td>
-            <td><span class="priority-pill priority-{{ item.criticality }}">{{ item.get_criticality_display }}</span></td>
+            <td>{{ item.assigned_user|person:"—" }}</td>
+            {% if is_support %}<td><span class="muted-line">{{ item.hostname|default:"" }}{% if item.hostname and item.ip_address %} · {% endif %}{{ item.ip_address|default:"" }}</span></td>{% endif %}
+            <td class="text-nowrap"><span class="muted-line">{{ item.get_status_display }}</span></td>
           </tr>
         {% empty %}
-          <tr><td colspan="5" class="text-muted">Оборудование не найдено.</td></tr>
+          <tr><td colspan="7" class="text-muted">Оборудование не найдено.</td></tr>
         {% endfor %}
       </tbody>
     </table>

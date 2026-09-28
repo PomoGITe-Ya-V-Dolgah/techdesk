@@ -6,6 +6,8 @@ from .models import (
     EquipmentCategory,
     Location,
     Profile,
+    Software,
+    SoftwareInstallation,
     Solution,
     Ticket,
     TicketCategory,
@@ -15,16 +17,31 @@ from .models import (
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
-    list_display = ("user", "role", "department")
+    list_display = ("user", "role", "department", "position", "phone")
     list_filter = ("role", "department")
     search_fields = ("user__username", "user__first_name", "user__last_name")
 
 
+class SoftwareInstallationInline(admin.TabularInline):
+    model = SoftwareInstallation
+    extra = 1
+    autocomplete_fields = ("software",)
+
+
 @admin.register(Equipment)
 class EquipmentAdmin(admin.ModelAdmin):
-    list_display = ("name", "inventory_number", "category", "location", "criticality")
-    list_filter = ("category", "criticality", "location")
-    search_fields = ("name", "inventory_number", "serial_number", "model")
+    list_display = ("name", "inventory_number", "category", "location", "assigned_user", "status", "ip_address")
+    list_filter = ("status", "category", "criticality", "location")
+    search_fields = ("name", "inventory_number", "serial_number", "model", "hostname", "ip_address")
+    autocomplete_fields = ("assigned_user", "parent")
+    inlines = [SoftwareInstallationInline]
+
+
+@admin.register(Software)
+class SoftwareAdmin(admin.ModelAdmin):
+    list_display = ("name", "vendor", "license_type")
+    list_filter = ("license_type",)
+    search_fields = ("name", "vendor")
 
 
 @admin.register(Ticket)
@@ -40,5 +57,3 @@ admin.site.register(EquipmentCategory)
 admin.site.register(TicketCategory)
 admin.site.register(TicketComment)
 admin.site.register(Solution)
-
-# Register your models here.

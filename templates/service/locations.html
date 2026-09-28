@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% load service_extras %}
+
+{% block title %}Что где стоит{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">Что где стоит</h1>
+    <p class="page-subtitle">Техника по кабинетам и сотрудники, которые за ней работают. Нажмите на устройство, чтобы открыть карточку или создать заявку.</p>
+  </div>
+</div>
+
+<div class="row g-4">
+  {% for location in locations %}
+    <div class="col-md-6 col-xl-4">
+      <div class="card h-100">
+        <div class="card-header d-flex justify-content-between">
+          <span>{{ location }}</span>
+          <span class="small text-muted">{{ location.items|length }} шт.</span>
+        </div>
+        <div class="list-group list-group-flush">
+          {% for item in location.items %}
+            <a class="list-group-item list-group-item-action" href="{{ item.get_absolute_url }}">
+              <div>{{ item.name }}</div>
+              <div class="small text-muted">
+                {{ item.category }} · {{ item.inventory_number }}
+                {% if item.assigned_user %} · {{ item.assigned_user|person }}{% endif %}
+                {% if item.status != "in_use" %} · {{ item.get_status_display }}{% endif %}
+              </div>
+            </a>
+          {% empty %}
+            <div class="list-group-item text-muted">Техники нет.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  {% empty %}
+    <div class="col-12"><div class="card"><div class="card-body text-muted">Кабинеты пока не заведены. Добавьте оборудование или импортируйте реестр из Excel.</div></div></div>
+  {% endfor %}
+</div>
+{% endblock %}

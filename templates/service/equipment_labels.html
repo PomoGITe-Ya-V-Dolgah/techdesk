@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}QR-наклейки{% endblock %}
+
+{% block content %}
+<div class="page-head no-print">
+  <div>
+    <h1 class="page-title">QR-наклейки</h1>
+    <p class="page-subtitle">Распечатайте на A4 (Ctrl+P), вырежьте и наклейте на технику. Сотрудник сканирует QR телефоном — открывается заявка на это устройство.</p>
+  </div>
+  <form class="d-flex gap-2">
+    <select class="form-select" name="location" onchange="this.form.submit()">
+      <option value="">Все кабинеты</option>
+      {% for item in locations %}<option value="{{ item.id }}" {% if location == item.id|stringformat:"s" %}selected{% endif %}>{{ item }}</option>{% endfor %}
+    </select>
+    <button type="button" class="btn btn-primary" onclick="window.print()">Печать</button>
+  </form>
+</div>
+
+<div class="label-sheet">
+  {% for item in equipment %}
+    <div class="qr-label">
+      <img src="{% url 'equipment_qr' item.pk %}" alt="QR {{ item.inventory_number }}">
+      <div>
+        <strong>{{ item.inventory_number }}</strong>
+        <span>{{ item.name|truncatechars:40 }}</span>
+        <small>Проблема? Сканируйте QR или пишите заявку в techdesk</small>
+      </div>
+    </div>
+  {% empty %}
+    <p class="text-muted">Нет оборудования.</p>
+  {% endfor %}
+</div>
+{% endblock %}

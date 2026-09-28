@@ -42,7 +42,7 @@
       <div class="card-header">Нагрузка инженеров</div>
       <table class="table mb-0">
         {% for engineer in engineer_rows %}
-          <tr><td>{{ engineer.get_full_name|default:engineer.username }}</td><td class="text-end">{{ engineer.ticket_count }}</td></tr>
+          <tr><td>{{ engineer|person }}</td><td class="text-end">{{ engineer.ticket_count }}</td></tr>
         {% empty %}
           <tr><td class="text-muted">Нет данных.</td></tr>
         {% endfor %}

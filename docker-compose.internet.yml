@@ -1,0 +1,28 @@
+# Доступ к techdesk из интернета по HTTPS. Запускается ПОВЕРХ docker-compose.lan.yml:
+#   python3 deploy/make_env.py 192.168.1.10 --postgres --domain techdesk.example.ru
+#   docker compose -f docker-compose.lan.yml -f docker-compose.internet.yml up -d --build
+# Нужны: «белый» IP, домен с A-записью на него, проброс портов 80 и 443 на сервер.
+services:
+  web:
+    # Порт 8000 наружу больше не публикуем: все ходят через Caddy по HTTPS.
+    ports: !reset []
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      TECHDESK_UPSTREAM: web:8000
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/internet/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+
+volumes:
+  caddy_data:
+  caddy_config:

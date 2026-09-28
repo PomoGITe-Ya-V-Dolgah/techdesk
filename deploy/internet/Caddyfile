@@ -1,0 +1,15 @@
+# Caddy — обратный прокси с автоматическим HTTPS (сертификат Let's Encrypt).
+# Домен берется из .env (TECHDESK_DOMAIN), адрес приложения — TECHDESK_UPSTREAM:
+#   Docker:  web:8000 (по умолчанию)
+#   Windows: 127.0.0.1:8000
+{$TECHDESK_DOMAIN} {
+	encode gzip
+	reverse_proxy {$TECHDESK_UPSTREAM:web:8000}
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy same-origin
+		-Server
+	}
+	log
+}

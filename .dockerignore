@@ -1,0 +1,9 @@
+.venv/
+.git/
+.env
+db.sqlite3
+test.sqlite3
+backups/
+staticfiles/
+__pycache__/
+*.pyc

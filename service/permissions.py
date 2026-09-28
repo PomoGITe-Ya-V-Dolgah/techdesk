@@ -5,6 +5,11 @@ from django.shortcuts import redirect
 
 from .models import Profile
 
+# Роли технического отдела: видят все заявки и весь реестр.
+SUPPORT_ROLES = (Profile.Role.ADMIN, Profile.Role.OPERATOR, Profile.Role.ENGINEER, Profile.Role.MANAGER)
+# Роли, которые ведут реестр оборудования.
+REGISTRY_ROLES = (Profile.Role.ADMIN, Profile.Role.OPERATOR, Profile.Role.MANAGER)
+
 
 def user_role(user) -> str:
     if not user.is_authenticated:
@@ -17,6 +22,10 @@ def user_role(user) -> str:
 
 def has_role(user, *roles: str) -> bool:
     return user_role(user) in roles
+
+
+def is_support(user) -> bool:
+    return has_role(user, *SUPPORT_ROLES)
 
 
 def role_required(*roles: str):

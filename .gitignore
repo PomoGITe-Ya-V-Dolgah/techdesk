@@ -7,3 +7,5 @@ __pycache__/
 media/
 staticfiles/
 .DS_Store
+backups/
+deploy/windows/caddy.exe

@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.models import User
 
-from .models import Equipment, Profile, Ticket, TicketComment
+from .models import Equipment, Profile, Software, SoftwareInstallation, Ticket, TicketComment
 
 
 class StyledFormMixin:
@@ -32,8 +32,58 @@ class EquipmentForm(StyledFormMixin, forms.ModelForm):
             "manufacturer",
             "model",
             "criticality",
+            "status",
+            "assigned_user",
+            "parent",
+            "hostname",
+            "ip_address",
+            "mac_address",
+            "operating_system",
+            "purchase_date",
+            "warranty_until",
             "notes",
         ]
+        widgets = {
+            "purchase_date": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+            "warranty_until": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+            "notes": forms.Textarea(attrs={"rows": 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["assigned_user"].queryset = User.objects.filter(is_active=True).order_by("last_name", "first_name", "username")
+        self.fields["assigned_user"].label_from_instance = lambda user: user.get_full_name() or user.username
+        parents = Equipment.objects.exclude(status=Equipment.Status.WRITTEN_OFF)
+        if self.instance.pk:
+            parents = parents.exclude(pk=self.instance.pk)
+        self.fields["parent"].queryset = parents
+
+
+class SoftwareInstallationForm(StyledFormMixin, forms.Form):
+    software = forms.CharField(label="Программа", max_length=160, widget=forms.TextInput(attrs={"list": "software-names"}))
+    version = forms.CharField(label="Версия", max_length=60, required=False)
+    license_until = forms.DateField(label="Лицензия до", required=False, widget=forms.DateInput(attrs={"type": "date"}))
+
+    def save(self, equipment):
+        software, _ = Software.objects.get_or_create(name=self.cleaned_data["software"].strip())
+        installation, _ = SoftwareInstallation.objects.update_or_create(
+            equipment=equipment,
+            software=software,
+            defaults={"version": self.cleaned_data["version"], "license_until": self.cleaned_data["license_until"]},
+        )
+        return installation
+
+
+class EquipmentImportForm(StyledFormMixin, forms.Form):
+    file = forms.FileField(label="Файл Excel (.xlsx) или CSV")
+
+    def clean_file(self):
+        file = self.cleaned_data["file"]
+        if not file.name.lower().endswith((".xlsx", ".csv")):
+            raise forms.ValidationError("Нужен файл .xlsx или .csv.")
+        if file.size > 5 * 1024 * 1024:
+            raise forms.ValidationError("Файл больше 5 МБ.")
+        return file
 
 
 class TicketForm(StyledFormMixin, forms.ModelForm):
@@ -44,6 +94,14 @@ class TicketForm(StyledFormMixin, forms.ModelForm):
             "description": forms.Textarea(attrs={"rows": 5}),
             "due_at": forms.DateTimeInput(attrs={"type": "datetime-local"}),
         }
+
+    def __init__(self, *args, simple=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["equipment"].queryset = Equipment.objects.exclude(status=Equipment.Status.WRITTEN_OFF).select_related("location")
+        self.fields["equipment"].label_from_instance = lambda item: f"{item.name} ({item.inventory_number}) — {item.location}"
+        if simple:
+            # Сотруднику не нужен срок выполнения — его ставит техотдел.
+            del self.fields["due_at"]
 
 
 class TicketAssignForm(StyledFormMixin, forms.ModelForm):

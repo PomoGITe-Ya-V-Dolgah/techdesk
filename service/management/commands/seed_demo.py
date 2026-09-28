@@ -10,6 +10,8 @@ from service.models import (
     EquipmentCategory,
     Location,
     Profile,
+    Software,
+    SoftwareInstallation,
     Solution,
     Ticket,
     TicketCategory,
@@ -30,6 +32,7 @@ class Command(BaseCommand):
             "operator": self.user("operator", "operator123", "Ольга", "Оператор", Profile.Role.OPERATOR, support),
             "engineer": self.user("engineer", "engineer123", "Иван", "Инженер", Profile.Role.ENGINEER, support),
             "manager": self.user("manager", "manager123", "Мария", "Руководитель", Profile.Role.MANAGER, support),
+            "employee": self.user("employee", "employee123", "Елена", "Петрова", Profile.Role.EMPLOYEE, accounting),
         }
 
         printer_cat, _ = EquipmentCategory.objects.get_or_create(name="Принтер")
@@ -82,6 +85,60 @@ class Command(BaseCommand):
             },
         )
 
+        server_cat, _ = EquipmentCategory.objects.get_or_create(name="Сервер")
+        mfu_cat, _ = EquipmentCategory.objects.get_or_create(name="МФУ")
+        server_room, _ = Location.objects.get_or_create(name="Серверная", building="Главный корпус", floor="1", room="101")
+        Equipment.objects.filter(pk=pc.pk).update(
+            assigned_user=users["employee"], hostname="BUH-01", ip_address="192.168.1.21", operating_system="Windows 11 Pro"
+        )
+        Equipment.objects.filter(pk=printer.pk).update(parent=pc, ip_address="192.168.1.51")
+        server, _ = Equipment.objects.get_or_create(
+            inventory_number="SRV-101-001",
+            defaults={
+                "name": "Файловый сервер и 1С",
+                "category": server_cat,
+                "location": server_room,
+                "department": support,
+                "manufacturer": "HPE",
+                "model": "ProLiant ML30",
+                "criticality": Equipment.Criticality.CRITICAL,
+                "hostname": "SRV-01",
+                "ip_address": "192.168.1.5",
+                "operating_system": "Windows Server 2022",
+            },
+        )
+        Equipment.objects.get_or_create(
+            inventory_number="MFU-2-001",
+            defaults={
+                "name": "МФУ общее, 2 этаж",
+                "category": mfu_cat,
+                "location": room_205,
+                "manufacturer": "Kyocera",
+                "model": "M2540dn",
+                "ip_address": "192.168.1.50",
+                "notes": "Картридж TK-1170",
+            },
+        )
+        for equipment, name, version in [
+            (pc, "1С:Предприятие", "8.3"),
+            (pc, "Microsoft Office", "2021"),
+            (pc, "Kaspersky Endpoint Security", "12"),
+            (server, "1С:Предприятие (сервер)", "8.3"),
+            (server, "Veeam Agent", "6"),
+        ]:
+            software, _ = Software.objects.get_or_create(name=name)
+            SoftwareInstallation.objects.get_or_create(equipment=equipment, software=software, defaults={"version": version})
+
+        self.ticket(
+            title="Нужен доступ к общей папке отдела",
+            description="Прошу выдать доступ на чтение к папке \\\\SRV-01\\Бухгалтерия.",
+            category=ticket_pc,
+            equipment=None,
+            reporter=users["employee"],
+            status=Ticket.Status.NEW,
+            priority=Ticket.Priority.NORMAL,
+        )
+
         closed = self.ticket(
             title="Принтер не печатает документы",
             description="При отправке документа на печать появляется ошибка очереди печати. Бумага есть, тонер установлен.",
@@ -127,7 +184,7 @@ class Command(BaseCommand):
         )
         TicketComment.objects.get_or_create(ticket=closed, author=users["engineer"], text="Проверена печать тестовой страницы, проблема не повторяется.")
 
-        self.stdout.write(self.style.SUCCESS("Demo data created. Login: admin/admin123, operator/operator123, engineer/engineer123, manager/manager123"))
+        self.stdout.write(self.style.SUCCESS("Demo data created. Login: admin/admin123, operator/operator123, engineer/engineer123, manager/manager123, employee/employee123"))
 
     def user(self, username, password, first_name, last_name, role, department, is_superuser=False):
         user, created = User.objects.get_or_create(username=username, defaults={"first_name": first_name, "last_name": last_name})

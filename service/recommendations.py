@@ -28,7 +28,7 @@ def recommend_solutions(ticket: Ticket, limit: int = 3) -> list[Recommendation]:
         score = 0
         reasons = []
         source_ticket = solution.ticket
-        if solution.equipment_id == ticket.equipment_id:
+        if ticket.equipment_id and solution.equipment_id == ticket.equipment_id:
             score += 60
             reasons.append("то же оборудование")
         if source_ticket.category_id == ticket.category_id:

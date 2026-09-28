@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Импорт оборудования{% endblock %}
+
+{% block content %}
+<div class="form-page">
+  <div class="form-card">
+    <div class="form-card-head">
+      <div>
+        <h1>Импорт реестра из Excel</h1>
+        <p>Загрузите таблицу .xlsx или .csv. Первая строка — заголовки. Обязательные колонки: «Инв. номер», «Название», «Категория», «Кабинет».
+          Если инвентарный номер уже есть — карточка обновится. Кабинеты, категории и программы создаются автоматически.</p>
+        <p><a href="{% url 'equipment_import_template' %}">Скачать шаблон с примерами</a> · «Сотрудник» — логин или «Фамилия Имя» пользователя; «ПО» — через запятую; «Подключено к» — инв. номер.</p>
+      </div>
+    </div>
+
+    {% if result %}
+      <div class="alert {% if result.errors %}alert-warning{% else %}alert-success{% endif %}">
+        Добавлено: {{ result.created }}, обновлено: {{ result.updated }}, ошибок: {{ result.errors|length }}.
+      </div>
+      {% if result.errors or result.warnings %}
+        <ul class="small">
+          {% for line, message in result.errors %}<li class="text-danger">Строка {{ line }}: {{ message }}</li>{% endfor %}
+          {% for line, message in result.warnings %}<li class="text-muted">Строка {{ line }}: {{ message }}</li>{% endfor %}
+        </ul>
+      {% endif %}
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data" class="app-form">
+      {% csrf_token %}
+      <div class="form-grid">
+        <div class="form-field form-field-wide">
+          <label class="form-label" for="{{ form.file.id_for_label }}">{{ form.file.label }}</label>
+          {{ form.file }}
+          {% if form.file.errors %}<div class="form-errors">{{ form.file.errors }}</div>{% endif %}
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary">Загрузить</button>
+        <a class="btn btn-outline-secondary" href="{% url 'equipment_list' %}">К реестру</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

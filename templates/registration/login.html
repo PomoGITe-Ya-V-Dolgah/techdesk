@@ -14,7 +14,7 @@
     </div>
 
     <h1>Вход в систему</h1>
-    <p class="auth-subtitle">Используйте демо-аккаунт нужной роли для проверки сценариев ВКР.</p>
+    <p class="auth-subtitle">{% if show_demo_logins %}Используйте демо-аккаунт нужной роли для проверки сценариев.{% else %}Введите логин и пароль, выданные администратором.{% endif %}</p>
 
     <form method="post" class="auth-form">
       {% csrf_token %}
@@ -37,15 +37,18 @@
       <button class="btn btn-primary btn-lg w-100">Войти</button>
     </form>
 
+    {% if show_demo_logins %}
     <div class="demo-logins">
       <div class="demo-title">Демо-доступы</div>
       <div class="demo-grid">
         <span>admin</span><code>admin123</code>
+        <span>employee</span><code>employee123</code>
         <span>operator</span><code>operator123</code>
         <span>engineer</span><code>engineer123</code>
         <span>manager</span><code>manager123</code>
       </div>
     </div>
+    {% endif %}
   </section>
 </div>
 {% endblock %}

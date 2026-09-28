@@ -5,7 +5,7 @@
 {% block content %}
 <div class="page-head">
   <div>
-    <h1 class="page-title">Очередь заявок</h1>
+    <h1 class="page-title">{% if is_support %}Очередь заявок{% else %}Мои заявки{% endif %}</h1>
     <p class="page-subtitle">Фильтруйте обращения по статусу, оборудованию и приоритету.</p>
   </div>
   <a class="btn btn-primary" href="{% url 'ticket_create' %}">Создать заявку</a>
@@ -40,7 +40,7 @@
               <a class="queue-title" href="{{ ticket.get_absolute_url }}">{{ ticket.title }}</a>
               <div class="muted-line">{{ ticket.created_at|date:"d.m.Y H:i" }}</div>
             </td>
-            <td><a href="{{ ticket.equipment.get_absolute_url }}">{{ ticket.equipment.name }}</a></td>
+            <td>{% if ticket.equipment %}<a href="{{ ticket.equipment.get_absolute_url }}">{{ ticket.equipment.name }}</a>{% else %}<span class="muted-line">—</span>{% endif %}</td>
             <td><span class="status-pill status-{{ ticket.status }}">{{ ticket.get_status_display }}</span></td>
             <td><span class="priority-pill priority-{{ ticket.priority }}">{{ ticket.get_priority_display }}</span></td>
             <td><span class="muted-line">{{ ticket.assignee|default:"не назначен" }}</span></td>

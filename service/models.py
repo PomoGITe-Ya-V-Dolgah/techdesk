@@ -21,13 +21,16 @@ class Department(models.Model):
 class Profile(models.Model):
     class Role(models.TextChoices):
         ADMIN = "admin", "Администратор"
+        EMPLOYEE = "employee", "Сотрудник"
         OPERATOR = "operator", "Оператор"
         ENGINEER = "engineer", "Инженер"
         MANAGER = "manager", "Руководитель"
 
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="profile")
-    role = models.CharField("Роль", max_length=20, choices=Role.choices, default=Role.OPERATOR)
+    role = models.CharField("Роль", max_length=20, choices=Role.choices, default=Role.EMPLOYEE)
     department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Подразделение")
+    position = models.CharField("Должность", max_length=120, blank=True)
+    phone = models.CharField("Телефон (внутренний)", max_length=40, blank=True)
 
     class Meta:
         verbose_name = "Профиль"
@@ -72,6 +75,12 @@ class Equipment(models.Model):
         HIGH = "high", "Высокая"
         CRITICAL = "critical", "Критическая"
 
+    class Status(models.TextChoices):
+        IN_USE = "in_use", "В работе"
+        STOCK = "stock", "На складе"
+        REPAIR = "repair", "В ремонте"
+        WRITTEN_OFF = "written_off", "Списано"
+
     name = models.CharField("Наименование", max_length=180)
     inventory_number = models.CharField("Инвентарный номер", max_length=80, unique=True)
     serial_number = models.CharField("Серийный номер", max_length=120, blank=True)
@@ -81,6 +90,30 @@ class Equipment(models.Model):
     manufacturer = models.CharField("Производитель", max_length=120, blank=True)
     model = models.CharField("Модель", max_length=120, blank=True)
     criticality = models.CharField("Критичность", max_length=20, choices=Criticality.choices, default=Criticality.MEDIUM)
+    status = models.CharField("Статус", max_length=20, choices=Status.choices, default=Status.IN_USE)
+    assigned_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="assigned_equipment",
+        verbose_name="Сотрудник (за кем закреплено)",
+    )
+    parent = models.ForeignKey(
+        "self",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="children",
+        verbose_name="Подключено к / установлено на",
+        help_text="Например: монитор — к ПК, виртуальная машина — к серверу.",
+    )
+    hostname = models.CharField("Имя компьютера в сети", max_length=120, blank=True)
+    ip_address = models.GenericIPAddressField("IP-адрес", null=True, blank=True)
+    mac_address = models.CharField("MAC-адрес", max_length=40, blank=True)
+    operating_system = models.CharField("Операционная система", max_length=120, blank=True)
+    purchase_date = models.DateField("Дата покупки", null=True, blank=True)
+    warranty_until = models.DateField("Гарантия до", null=True, blank=True)
     notes = models.TextField("Примечание", blank=True)
     created_at = models.DateTimeField("Создано", auto_now_add=True)
 
@@ -94,6 +127,44 @@ class Equipment(models.Model):
 
     def get_absolute_url(self):
         return reverse("equipment_detail", kwargs={"pk": self.pk})
+
+
+class Software(models.Model):
+    class LicenseType(models.TextChoices):
+        FREE = "free", "Бесплатное"
+        COMMERCIAL = "commercial", "Коммерческая лицензия"
+        SUBSCRIPTION = "subscription", "Подписка"
+        UNKNOWN = "unknown", "Не указано"
+
+    name = models.CharField("Название", max_length=160, unique=True)
+    vendor = models.CharField("Разработчик", max_length=120, blank=True)
+    license_type = models.CharField("Тип лицензии", max_length=20, choices=LicenseType.choices, default=LicenseType.UNKNOWN)
+    notes = models.TextField("Примечание", blank=True, help_text="Где лежит лицензия, кто продлевает. Ключи здесь не храните.")
+
+    class Meta:
+        ordering = ["name"]
+        verbose_name = "Программа"
+        verbose_name_plural = "Программы"
+
+    def __str__(self):
+        return self.name
+
+
+class SoftwareInstallation(models.Model):
+    equipment = models.ForeignKey(Equipment, on_delete=models.CASCADE, related_name="installations", verbose_name="Оборудование")
+    software = models.ForeignKey(Software, on_delete=models.PROTECT, related_name="installations", verbose_name="Программа")
+    version = models.CharField("Версия", max_length=60, blank=True)
+    license_until = models.DateField("Лицензия до", null=True, blank=True)
+    installed_at = models.DateField("Установлено", null=True, blank=True)
+
+    class Meta:
+        ordering = ["software__name"]
+        unique_together = [("equipment", "software")]
+        verbose_name = "Установленная программа"
+        verbose_name_plural = "Установленные программы"
+
+    def __str__(self):
+        return f"{self.software} на {self.equipment}"
 
 
 class TicketCategory(models.Model):
@@ -132,7 +203,15 @@ class Ticket(models.Model):
     title = models.CharField("Тема", max_length=220)
     description = models.TextField("Описание проблемы")
     category = models.ForeignKey(TicketCategory, on_delete=models.PROTECT, verbose_name="Категория")
-    equipment = models.ForeignKey(Equipment, on_delete=models.PROTECT, related_name="tickets", verbose_name="Оборудование")
+    equipment = models.ForeignKey(
+        Equipment,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="tickets",
+        verbose_name="Оборудование",
+        help_text="Можно не указывать, если вопрос не про конкретное устройство (доступы, почта, 1С).",
+    )
     reporter = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="reported_tickets", verbose_name="Автор")
     assignee = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="assigned_tickets", verbose_name="Исполнитель")
     status = models.CharField("Статус", max_length=20, choices=Status.choices, default=Status.NEW)
@@ -188,7 +267,7 @@ class TicketComment(models.Model):
 
 class Solution(models.Model):
     ticket = models.OneToOneField(Ticket, on_delete=models.CASCADE, related_name="solution", verbose_name="Заявка")
-    equipment = models.ForeignKey(Equipment, on_delete=models.CASCADE, related_name="solutions", verbose_name="Оборудование")
+    equipment = models.ForeignKey(Equipment, on_delete=models.CASCADE, null=True, blank=True, related_name="solutions", verbose_name="Оборудование")
     title = models.CharField("Краткое название", max_length=220)
     problem_summary = models.TextField("Краткое описание проблемы")
     resolution_steps = models.TextField("Шаги решения")
@@ -203,4 +282,3 @@ class Solution(models.Model):
     def __str__(self):
         return self.title
 
-# Create your models here.
