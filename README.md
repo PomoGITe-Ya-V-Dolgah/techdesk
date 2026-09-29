@@ -53,6 +53,7 @@ python serve.py                    # сервер waitress на 0.0.0.0:8000
 Для Windows есть готовые скрипты в `deploy/windows/`, для Linux — `docker-compose.lan.yml`.
 Подробная инструкция: [docs/deploy/LAN.md](docs/deploy/LAN.md).
 Доступ из интернета (VPN или HTTPS через Caddy): [docs/deploy/INTERNET.md](docs/deploy/INTERNET.md).
+Развёртывание на VPS `tech.letii.ru` через существующий Caddy: [docs/deploy/VPS.md](docs/deploy/VPS.md).
 
 ## PostgreSQL
 

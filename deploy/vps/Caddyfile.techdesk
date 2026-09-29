@@ -1,0 +1,5 @@
+# Replace the tech.letii.ru block in /home/deploy/narratio/Caddyfile.
+tech.letii.ru {
+    encode gzip
+    reverse_proxy techdesk-app:8000
+}

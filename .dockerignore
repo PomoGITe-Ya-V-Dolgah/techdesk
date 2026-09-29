@@ -7,3 +7,4 @@ backups/
 staticfiles/
 __pycache__/
 *.pyc
+admin-credentials.txt

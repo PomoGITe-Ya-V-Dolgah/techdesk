@@ -9,3 +9,4 @@ staticfiles/
 .DS_Store
 backups/
 deploy/windows/caddy.exe
+admin-credentials.txt
