@@ -1,0 +1,8 @@
+{% load service_extras %}
+<thead><tr>
+  {% for header in headers %}
+    <th scope="col" {% if header.active %}aria-sort="{{ header.direction }}"{% endif %}>
+      <a href="{% query_update sort=header.next %}" class="text-nowrap" aria-label="{{ header.label }}: сортировать {% if header.next|slice:':1' == '-' %}по убыванию{% else %}по возрастанию{% endif %}">{{ header.label }}{% if header.active %}<span aria-hidden="true"> {% if header.direction == 'descending' %}↓{% else %}↑{% endif %}</span>{% endif %}</a>
+    </th>
+  {% endfor %}
+</tr></thead>

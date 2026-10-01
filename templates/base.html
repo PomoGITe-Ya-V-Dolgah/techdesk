@@ -44,6 +44,7 @@
             <input type="search" name="q" placeholder="Поиск по заявкам и оборудованию">
           </form>
           <div class="topbar-actions">
+            <button class="btn btn-light btn-sm" type="button" data-bs-toggle="offcanvas" data-bs-target="#notification-settings" aria-controls="notification-settings">Уведомления</button>
             <a class="btn btn-primary btn-sm" href="{% url 'ticket_create' %}">Новая заявка</a>
             <div class="user-chip">
               <span class="avatar">{{ user.username|first|upper }}</span>
@@ -73,6 +74,29 @@
     </div>
   {% endif %}
 
+  {% if user.is_authenticated %}
+  <div class="offcanvas offcanvas-end" tabindex="-1" id="notification-settings" aria-labelledby="notification-settings-title">
+    <div class="offcanvas-header">
+      <h2 class="offcanvas-title h5" id="notification-settings-title">Уведомления</h2>
+      <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Закрыть"></button>
+    </div>
+    <div class="offcanvas-body" id="notification-controls" data-events-url="{% url 'ticket_events' %}" data-preferences-url="{% url 'notification_preferences' %}">
+      <label class="form-check"><input type="checkbox" class="form-check-input" id="notification-sound" {% if notification_preferences.sound %}checked{% endif %}> <span class="form-check-label">Звуковой сигнал</span></label>
+      <label for="notification-scope" class="form-label mt-3">О каких событиях сообщать</label>
+      <select id="notification-scope" class="form-select">
+        {% if is_support %}<option value="all" {% if notification_preferences.scope == 'all' %}selected{% endif %}>Все новые заявки и назначенные мне</option>{% endif %}
+        <option value="assigned" {% if notification_preferences.scope == 'assigned' %}selected{% endif %}>Только назначенные мне</option>
+      </select>
+      <button type="button" class="btn btn-outline-primary mt-3" id="notification-test">Проверить звук</button>
+      <p class="small text-muted mt-3">Работает, пока сайт открыт. На этом устройстве нажмите «Проверить звук», чтобы разрешить воспроизведение. Настройки сохраняются в вашей учётной записи.</p>
+      <p id="notification-feedback" role="status" aria-live="polite"></p>
+    </div>
+  </div>
+  <div id="ticket-notice" class="ticket-notice" hidden role="status" aria-live="polite"></div>
+  {{ notification_preferences|json_script:"notification-preferences" }}
+  <script src="{% static 'js/ticket-live.js' %}" defer></script>
+  {% endif %}
   <script src="{% static 'vendor/bootstrap/bootstrap.bundle.min.js' %}"></script>
+  <script src="{% static 'js/table-sort.js' %}" defer></script>
 </body>
 </html>

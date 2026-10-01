@@ -6,12 +6,15 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.db.models import Count, Prefetch, Q
-from django.http import HttpResponse
+from django.db.models import Count, Prefetch, Q, F, Case, When, Value, CharField
+from django.http import HttpResponse, JsonResponse
+from django.db import transaction
+from django.db.models import Max
+import json
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_GET
 
 from . import notifications
 from .forms import (
@@ -24,9 +27,10 @@ from .forms import (
     TicketStatusForm,
 )
 from .importers import import_equipment, template_csv
-from .models import Equipment, EquipmentCategory, Location, Profile, Software, SoftwareInstallation, Solution, Ticket
+from .models import Equipment, EquipmentCategory, Location, Profile, Software, SoftwareInstallation, Solution, Ticket, TicketEvent
 from .permissions import REGISTRY_ROLES, is_support, role_required, user_role
 from .recommendations import recommend_solutions
+from .sorting import sort_queryset
 
 OPEN_STATUSES_EXCLUDED = [Ticket.Status.RESOLVED, Ticket.Status.CLOSED, Ticket.Status.REJECTED]
 
@@ -66,6 +70,7 @@ def equipment_list(request):
         "category": request.GET.get("category", "").strip(),
         "location": request.GET.get("location", "").strip(),
         "status": request.GET.get("status", "").strip(),
+        "employee": request.GET.get("employee", "").strip(),
     }
     equipment = Equipment.objects.select_related("category", "location", "department", "assigned_user")
     if filters["q"]:
@@ -86,12 +91,41 @@ def equipment_list(request):
         equipment = equipment.filter(category_id=filters["category"])
     if filters["location"]:
         equipment = equipment.filter(location_id=filters["location"])
+    if filters["employee"] == "unassigned":
+        equipment = equipment.filter(assigned_user__isnull=True)
+    elif filters["employee"]:
+        if filters["employee"].isdigit():
+            equipment = equipment.filter(assigned_user_id=filters["employee"])
+        else:
+            equipment = equipment.none()
     if filters["status"]:
         equipment = equipment.filter(status=filters["status"])
     elif not filters["q"]:
         equipment = equipment.exclude(status=Equipment.Status.WRITTEN_OFF)
+    columns = [
+        ("name", "Название", ["name"]),
+        ("inventory", "Инв. номер", ["inventory_number"]),
+        ("category", "Категория", ["category__name"]),
+        ("location", "Место", ["location__building", "location__floor", "location__room", "location__name"]),
+        ("employee", "Сотрудник", ["employee_label", "assigned_user__first_name", "assigned_user__username"]),
+    ]
+    if is_support(request.user):
+        columns += [("hostname", "Имя ПК", ["hostname"]), ("ip", "IP", ["ip_address"])]
+    columns += [("status", "Статус", ["status_label"])]
+    equipment = equipment.annotate(
+        employee_label=Case(
+            When(assigned_user__last_name="", assigned_user__first_name="", then=F("assigned_user__username")),
+            When(assigned_user__last_name="", then=F("assigned_user__first_name")),
+            default=F("assigned_user__last_name"), output_field=CharField(),
+        ),
+        status_label=Case(*[When(status=value, then=Value(label)) for value, label in Equipment.Status.choices], output_field=CharField()),
+    )
+    equipment, sort, headers = sort_queryset(request, equipment, columns)
     context = {
         "equipment": equipment,
+        "headers": headers,
+        "sort": sort,
+        "employees": User.objects.filter(Q(is_active=True) | Q(assigned_equipment__isnull=False)).distinct().order_by("last_name", "first_name", "username"),
         "query": filters["q"],
         "filters": filters,
         "categories": EquipmentCategory.objects.all(),
@@ -243,15 +277,34 @@ def ticket_list(request):
         tickets = tickets.filter(equipment_id=filters["equipment"])
     if filters["q"]:
         tickets = tickets.filter(Q(title__icontains=filters["q"]) | Q(description__icontains=filters["q"]) | Q(equipment__name__icontains=filters["q"]))
+    columns = [
+        ("id", "ID", ["pk"]), ("title", "Тема", ["title"]),
+        ("created", "Создана", ["created_at"]),
+        ("equipment", "Оборудование", ["equipment__name"]),
+        ("status", "Статус", ["status_order"]),
+        ("priority", "Приоритет", ["priority_order"]),
+        ("assignee", "Исполнитель", ["assignee__last_name", "assignee__first_name", "assignee__username"]),
+        ("due", "Выполнить до", ["due_at"]),
+    ]
+    tickets = tickets.annotate(
+        status_order=Case(*[When(status=value, then=Value(index)) for index, (value, _) in enumerate(Ticket.Status.choices)]),
+        priority_order=Case(*[When(priority=value, then=Value(index)) for index, (value, _) in enumerate(Ticket.Priority.choices)]),
+    )
+    tickets, sort, headers = sort_queryset(request, tickets, columns, default="-created")
     context = {
         "tickets": tickets,
+        "sort": sort,
+        "headers": headers,
         "filters": filters,
         "statuses": Ticket.Status.choices,
         "engineers": User.objects.filter(profile__role=Profile.Role.ENGINEER),
         "equipment": Equipment.objects.exclude(status=Equipment.Status.WRITTEN_OFF),
         "role": user_role(request.user),
     }
-    return render(request, "service/ticket_list.html", context)
+    template = "service/partials/ticket_table.html" if request.GET.get("partial") == "1" else "service/ticket_list.html"
+    response = render(request, template, context)
+    response["Cache-Control"] = "no-store"
+    return response
 
 
 @login_required
@@ -265,7 +318,9 @@ def ticket_create(request):
     if request.method == "POST" and form.is_valid():
         ticket = form.save(commit=False)
         ticket.reporter = request.user
-        ticket.save()
+        with transaction.atomic():
+            ticket.save()
+            TicketEvent.objects.create(ticket=ticket, kind="created", actor=request.user)
         notifications.ticket_created(ticket)
         messages.success(request, f"Заявка #{ticket.pk} создана. Статус можно отслеживать здесь.")
         return redirect(ticket)
@@ -297,13 +352,18 @@ def ticket_detail(request, pk):
 @role_required(Profile.Role.ADMIN, Profile.Role.OPERATOR, Profile.Role.MANAGER)
 def ticket_assign(request, pk):
     ticket = get_object_or_404(Ticket, pk=pk)
+    old_assignee_id = ticket.assignee_id
     form = TicketAssignForm(request.POST or None, instance=ticket)
     if request.method == "POST" and form.is_valid():
         ticket = form.save(commit=False)
         if ticket.status == Ticket.Status.NEW:
             ticket.status = Ticket.Status.ASSIGNED
-        ticket.save()
-        notifications.ticket_assigned(ticket)
+        with transaction.atomic():
+            ticket.save()
+            if ticket.assignee_id != old_assignee_id:
+                TicketEvent.objects.create(ticket=ticket, kind="assigned", actor=request.user, recipient=ticket.assignee)
+        if ticket.assignee_id != old_assignee_id:
+            notifications.ticket_assigned(ticket)
         messages.success(request, "Исполнитель назначен.")
         return redirect(ticket)
     return render(request, "service/form.html", {"form": form, "title": "Назначение исполнителя", "submit": "Назначить"})
@@ -409,3 +469,53 @@ def equipment_export_csv(request):
             item.notes,
         ])
     return response
+
+
+@login_required
+@require_GET
+def ticket_events(request):
+    """Первый запрос задаёт стартовую точку; старые события не звучат."""
+    latest = TicketEvent.objects.aggregate(value=Max("id"))["value"] or 0
+    raw = request.GET.get("after")
+    if raw is None:
+        response = JsonResponse({"cursor": latest, "events": []})
+        response["Cache-Control"] = "no-store"
+        return response
+    try:
+        after = int(raw)
+        if after < 0 or after > latest:
+            raise ValueError
+    except (ValueError, TypeError):
+        return JsonResponse({"error": "Некорректный курсор"}, status=400)
+    profile, _ = Profile.objects.get_or_create(user=request.user)
+    audience = Q(kind="assigned", recipient=request.user)
+    if is_support(request.user) and profile.notification_scope == "all":
+        audience |= Q(kind="created")
+    events = list(TicketEvent.objects.filter(audience, id__gt=after, id__lte=latest,
+        ticket__in=visible_tickets(request.user)).exclude(actor=request.user)
+        .select_related("ticket").order_by("id")[:100])
+    cursor = events[-1].id if len(events) == 100 else latest
+    response = JsonResponse({"cursor": cursor, "events": [
+        {"id": event.id, "ticket_id": event.ticket_id, "title": event.ticket.title,
+         "kind": event.kind, "url": event.ticket.get_absolute_url()} for event in events
+    ]})
+    response["Cache-Control"] = "no-store"
+    return response
+
+
+@login_required
+@require_POST
+def notification_preferences(request):
+    try:
+        payload = json.loads(request.body)
+    except (ValueError, UnicodeDecodeError):
+        return JsonResponse({"error": "Некорректные настройки"}, status=400)
+    if not isinstance(payload, dict) or type(payload.get("sound")) is not bool or payload.get("scope") not in {"all", "assigned"}:
+        return JsonResponse({"error": "Некорректные настройки"}, status=400)
+    if payload["scope"] == "all" and not is_support(request.user):
+        return JsonResponse({"error": "Недостаточно прав"}, status=403)
+    profile, _ = Profile.objects.get_or_create(user=request.user)
+    profile.notification_sound = payload["sound"]
+    profile.notification_scope = payload["scope"]
+    profile.save(update_fields=["notification_sound", "notification_scope"])
+    return JsonResponse({"sound": profile.notification_sound, "scope": profile.notification_scope})

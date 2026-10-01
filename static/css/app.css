@@ -668,3 +668,15 @@ a {
   .label-sheet { grid-template-columns: repeat(3, 1fr); gap: 4mm; }
   body { background: #fff !important; }
 }
+
+
+.status-options { display: flex; flex-wrap: wrap; gap: 12px; }
+.status-option { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.status-option input:focus-visible + span { outline: 2px solid #2563eb; outline-offset: 3px; }
+.deadline-overdue { color: #b42318; font-size: 12px; font-weight: 600; }
+#ticket-live-status { margin: 12px 0; }
+.ticket-notice { position: fixed; right: 24px; bottom: 24px; z-index: 1050; max-width: 360px; padding: 16px; border: 1px solid #d4dceb; border-radius: 8px; background: white; box-shadow: 0 6px 24px #14203322; }
+
+.table-sort-button { border: 0; padding: 0; background: transparent; color: inherit; font: inherit; text-align: inherit; cursor: pointer; white-space: nowrap; }
+.table-sort-button:hover { color: #2454d6; text-decoration: underline; }
+.table-sort-button:focus-visible { outline: 2px solid #2454d6; outline-offset: 4px; border-radius: 2px; }

@@ -22,8 +22,20 @@
       <div class="form-grid">
         {% for field in form %}
           <div class="form-field {% if field.field.widget.input_type == 'textarea' %}form-field-wide{% endif %}">
-            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-            {{ field }}
+            {% if field.field.widget.input_type == 'radio' %}
+              <fieldset class="status-options">
+                <legend class="form-label">{{ field.label }}</legend>
+                {% for value,label in field.field.choices %}
+                  <label class="status-option">
+                    <input type="radio" name="{{ field.html_name }}" value="{{ value }}" {% if field.value == value %}checked{% endif %} required>
+                    <span class="status-pill status-{{ value }}">{{ label }}</span>
+                  </label>
+                {% endfor %}
+              </fieldset>
+            {% else %}
+              <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+              {{ field }}
+            {% endif %}
             {% if field.help_text %}
               <div class="form-help">{{ field.help_text }}</div>
             {% endif %}

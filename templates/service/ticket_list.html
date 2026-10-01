@@ -12,6 +12,7 @@
 </div>
 
 <form class="toolbar row g-2">
+  <input type="hidden" name="sort" value="{{ sort }}">
   <div class="col-md-3"><input class="form-control" name="q" value="{{ filters.q }}" placeholder="Поиск"></div>
   <div class="col-md-3">
     <select class="form-select" name="status">
@@ -28,28 +29,8 @@
   <div class="col-md-3"><button class="btn btn-outline-primary w-100">Применить</button></div>
 </form>
 
-<div class="card">
-  <div class="table-responsive">
-    <table class="table table-hover align-middle mb-0">
-      <thead><tr><th>ID</th><th>Тема</th><th>Оборудование</th><th>Статус</th><th>Приоритет</th><th>Исполнитель</th></tr></thead>
-      <tbody>
-        {% for ticket in tickets %}
-          <tr class="{% if ticket.is_overdue %}table-warning{% endif %}">
-            <td>#{{ ticket.id }}</td>
-            <td>
-              <a class="queue-title" href="{{ ticket.get_absolute_url }}">{{ ticket.title }}</a>
-              <div class="muted-line">{{ ticket.created_at|date:"d.m.Y H:i" }}</div>
-            </td>
-            <td>{% if ticket.equipment %}<a href="{{ ticket.equipment.get_absolute_url }}">{{ ticket.equipment.name }}</a>{% else %}<span class="muted-line">—</span>{% endif %}</td>
-            <td><span class="status-pill status-{{ ticket.status }}">{{ ticket.get_status_display }}</span></td>
-            <td><span class="priority-pill priority-{{ ticket.priority }}">{{ ticket.get_priority_display }}</span></td>
-            <td><span class="muted-line">{{ ticket.assignee|default:"не назначен" }}</span></td>
-          </tr>
-        {% empty %}
-          <tr><td colspan="6" class="text-muted">Заявки не найдены.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+<div id="ticket-live-status" class="muted-line" role="status" aria-live="polite">Автообновление каждые 10 секунд</div>
+<div id="ticket-table" data-refresh-url="{% url 'ticket_list' %}">
+  {% include "service/partials/ticket_table.html" %}
 </div>
 {% endblock %}

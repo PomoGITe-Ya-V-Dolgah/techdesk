@@ -3,6 +3,8 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    path("notifications/events/", views.ticket_events, name="ticket_events"),
+    path("notifications/preferences/", views.notification_preferences, name="notification_preferences"),
     path("", views.dashboard, name="dashboard"),
     path("locations/", views.locations_overview, name="locations_overview"),
     path("equipment/", views.equipment_list, name="equipment_list"),

@@ -28,6 +28,8 @@ class Profile(models.Model):
 
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="profile")
     role = models.CharField("Роль", max_length=20, choices=Role.choices, default=Role.EMPLOYEE)
+    notification_sound = models.BooleanField("Звук уведомлений", default=False)
+    notification_scope = models.CharField("События для звука", max_length=20, choices=[("all", "Все новые заявки"), ("assigned", "Назначенные мне")], default="assigned")
     department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Подразделение")
     position = models.CharField("Должность", max_length=120, blank=True)
     phone = models.CharField("Телефон (внутренний)", max_length=40, blank=True)
@@ -282,3 +284,12 @@ class Solution(models.Model):
     def __str__(self):
         return self.title
 
+
+
+class TicketEvent(models.Model):
+    """События создания и назначения для уведомлений в открытом браузере."""
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name="events")
+    kind = models.CharField(max_length=20, choices=[("created", "Создана"), ("assigned", "Назначена")])
+    actor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name="ticket_events_created")
+    recipient = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="ticket_events_received")
+    created_at = models.DateTimeField(auto_now_add=True)

@@ -71,14 +71,14 @@
     <div class="card mb-4">
       <div class="card-header">Установленное ПО</div>
       <div class="table-responsive">
-        <table class="table mb-0">
-          <thead><tr><th>Программа</th><th>Версия</th><th>Лицензия до</th>{% if can_edit_registry %}<th></th>{% endif %}</tr></thead>
+        <table class="table mb-0" data-sort-table="software">
+          <thead><tr><th>Программа</th><th>Версия</th><th data-sort-type="date">Лицензия до</th>{% if can_edit_registry %}<th data-sort-disabled></th>{% endif %}</tr></thead>
           <tbody>
             {% for inst in installations %}
               <tr>
                 <td>{{ inst.software.name }}</td>
                 <td>{{ inst.version|default:"—" }}</td>
-                <td>{{ inst.license_until|date:"d.m.Y"|default:"—" }}</td>
+                <td data-sort-value="{{ inst.license_until|date:'Y-m-d' }}">{{ inst.license_until|date:"d.m.Y"|default:"—" }}</td>
                 {% if can_edit_registry %}
                 <td class="text-end">
                   <form method="post" action="{% url 'equipment_software_remove' equipment.pk inst.pk %}">
@@ -109,8 +109,8 @@
     <div class="card mb-4">
       <div class="card-header">История заявок</div>
       <div class="table-responsive">
-        <table class="table table-hover mb-0">
-          <thead><tr><th>ID</th><th>Тема</th><th>Статус</th><th>Решение</th></tr></thead>
+        <table class="table table-hover mb-0" data-sort-table="history">
+          <thead><tr><th data-sort-type="number">ID</th><th>Тема</th><th>Статус</th><th>Решение</th></tr></thead>
           <tbody>
             {% for ticket in tickets %}
               <tr>

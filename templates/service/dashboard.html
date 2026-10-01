@@ -41,8 +41,8 @@
     <div class="card">
       <div class="card-header">{% if is_support %}Последние заявки{% else %}Мои заявки — открытых: {{ open_count }}{% endif %}</div>
       <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-          <thead><tr><th>ID</th><th>Тема</th><th>Оборудование</th><th>Статус</th><th>Исполнитель</th></tr></thead>
+        <table class="table table-hover align-middle mb-0" data-sort-table="recent">
+          <thead><tr><th data-sort-type="number">ID</th><th>Тема</th><th>Оборудование</th><th>Статус</th><th>Исполнитель</th></tr></thead>
           <tbody>
             {% for ticket in recent_tickets %}
               <tr>

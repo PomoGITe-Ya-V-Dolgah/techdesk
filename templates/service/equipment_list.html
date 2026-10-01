@@ -20,6 +20,7 @@
 </div>
 
 <form class="toolbar row g-2">
+  <input type="hidden" name="sort" value="{{ sort }}">
   <div class="col-md-4"><input class="form-control" name="q" value="{{ query }}" placeholder="Название, инв. номер, сотрудник, имя ПК, IP, программа"></div>
   <div class="col-md-2">
     <select class="form-select" name="category">
@@ -39,13 +40,22 @@
       {% for value, label in statuses %}<option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
     </select>
   </div>
+  <div class="col-md-4">
+    <select class="form-select" name="employee" aria-label="Сотрудник">
+      <option value="">Все сотрудники</option>
+      <option value="unassigned" {% if filters.employee == 'unassigned' %}selected{% endif %}>Без закрепления</option>
+      {% for employee in employees %}<option value="{{ employee.pk }}" {% if filters.employee == employee.pk|stringformat:"s" %}selected{% endif %}>{{ employee|person }}{% if not employee.is_active %} (неактивен){% endif %}</option>{% endfor %}
+    </select>
+  </div>
   <div class="col-md-2"><button class="btn btn-outline-primary w-100">Найти</button></div>
+  <div class="col-md-2"><a class="btn btn-outline-secondary w-100" href="{% url 'equipment_list' %}">Сбросить</a></div>
 </form>
+<p class="small text-muted">Нажмите на заголовок столбца для сортировки; повторное нажатие меняет направление.</p>
 
 <div class="card">
   <div class="table-responsive">
     <table class="table table-hover align-middle mb-0">
-      <thead><tr><th>Название</th><th>Инв. номер</th><th>Категория</th><th>Место</th><th>Сотрудник</th>{% if is_support %}<th>Имя ПК / IP</th>{% endif %}<th>Статус</th></tr></thead>
+      {% include "service/partials/sort_headers.html" %}
       <tbody>
         {% for item in equipment %}
           <tr>
@@ -53,12 +63,12 @@
             <td class="text-nowrap">{{ item.inventory_number }}</td>
             <td>{{ item.category }}</td>
             <td>{{ item.location }}</td>
-            <td>{{ item.assigned_user|person:"—" }}</td>
-            {% if is_support %}<td><span class="muted-line">{{ item.hostname|default:"" }}{% if item.hostname and item.ip_address %} · {% endif %}{{ item.ip_address|default:"" }}</span></td>{% endif %}
+            <td>{% if item.assigned_user %}<a href="{% url 'equipment_list' %}?employee={{ item.assigned_user_id }}&amp;sort={{ sort }}" title="Вся техника сотрудника">{{ item.assigned_user|person }}</a>{% else %}<a href="{% url 'equipment_list' %}?employee=unassigned&amp;sort={{ sort }}">Без закрепления</a>{% endif %}</td>
+            {% if is_support %}<td>{{ item.hostname|default:"—" }}</td><td class="text-nowrap">{{ item.ip_address|default:"—" }}</td>{% endif %}
             <td class="text-nowrap"><span class="muted-line">{{ item.get_status_display }}</span></td>
           </tr>
         {% empty %}
-          <tr><td colspan="7" class="text-muted">Оборудование не найдено.</td></tr>
+          <tr><td colspan="{{ headers|length }}" class="text-muted">Оборудование не найдено.</td></tr>
         {% endfor %}
       </tbody>
     </table>

@@ -16,37 +16,43 @@
   <div class="col-lg-4">
     <div class="card">
       <div class="card-header">Заявки по статусам</div>
-      <table class="table mb-0">
+      <table class="table mb-0" data-sort-table="statuses">
+        <thead><tr><th>Статус</th><th data-sort-type="number">Заявок</th></tr></thead>
+        <tbody>
         {% for row in status_rows %}
           <tr><td>{{ status_labels|get_item:row.status }}</td><td class="text-end">{{ row.count }}</td></tr>
         {% empty %}
           <tr><td class="text-muted">Нет данных.</td></tr>
         {% endfor %}
-      </table>
+      </tbody></table>
     </div>
   </div>
   <div class="col-lg-4">
     <div class="card">
       <div class="card-header">Оборудование по обращениям</div>
-      <table class="table mb-0">
+      <table class="table mb-0" data-sort-table="equipment">
+        <thead><tr><th>Оборудование</th><th data-sort-type="number">Заявок</th></tr></thead>
+        <tbody>
         {% for item in equipment_rows %}
           <tr><td>{{ item.name }}</td><td class="text-end">{{ item.ticket_count }}</td></tr>
         {% empty %}
           <tr><td class="text-muted">Нет данных.</td></tr>
         {% endfor %}
-      </table>
+      </tbody></table>
     </div>
   </div>
   <div class="col-lg-4">
     <div class="card">
       <div class="card-header">Нагрузка инженеров</div>
-      <table class="table mb-0">
+      <table class="table mb-0" data-sort-table="engineers">
+        <thead><tr><th>Исполнитель</th><th data-sort-type="number">Заявок</th></tr></thead>
+        <tbody>
         {% for engineer in engineer_rows %}
           <tr><td>{{ engineer|person }}</td><td class="text-end">{{ engineer.ticket_count }}</td></tr>
         {% empty %}
           <tr><td class="text-muted">Нет данных.</td></tr>
         {% endfor %}
-      </table>
+      </tbody></table>
     </div>
   </div>
 </div>

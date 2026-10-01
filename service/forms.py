@@ -2,6 +2,7 @@ from django import forms
 from django.contrib.auth.models import User
 
 from .models import Equipment, Profile, Software, SoftwareInstallation, Ticket, TicketComment
+from .permissions import eligible_assignees, assignee_label
 
 
 class StyledFormMixin:
@@ -92,7 +93,7 @@ class TicketForm(StyledFormMixin, forms.ModelForm):
         fields = ["title", "description", "category", "equipment", "priority", "due_at"]
         widgets = {
             "description": forms.Textarea(attrs={"rows": 5}),
-            "due_at": forms.DateTimeInput(attrs={"type": "datetime-local"}),
+            "due_at": forms.DateTimeInput(attrs={"type": "datetime-local"}, format="%Y-%m-%dT%H:%M"),
         }
 
     def __init__(self, *args, simple=False, **kwargs):
@@ -113,11 +114,14 @@ class TicketAssignForm(StyledFormMixin, forms.ModelForm):
 
     class Meta:
         model = Ticket
-        fields = ["assignee"]
+        fields = ["assignee", "due_at"]
+        widgets = {"due_at": forms.DateTimeInput(attrs={"type": "datetime-local"}, format="%Y-%m-%dT%H:%M")}
+
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["assignee"].queryset = User.objects.filter(profile__role=Profile.Role.ENGINEER).order_by("last_name", "username")
+        self.fields["assignee"].queryset = eligible_assignees()
+        self.fields["assignee"].label_from_instance = assignee_label
 
 
 class TicketStatusForm(StyledFormMixin, forms.ModelForm):
@@ -125,6 +129,7 @@ class TicketStatusForm(StyledFormMixin, forms.ModelForm):
         model = Ticket
         fields = ["status", "resolution_summary"]
         widgets = {
+            "status": forms.RadioSelect(),
             "resolution_summary": forms.Textarea(attrs={"rows": 4}),
         }
 

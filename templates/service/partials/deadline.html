@@ -1,0 +1,14 @@
+{% if ticket.due_at %}
+  <time datetime="{{ ticket.due_at|date:'c' }}">{{ ticket.due_at|date:"d.m.Y H:i" }}</time>
+  {% if ticket.status == 'resolved' or ticket.status == 'closed' or ticket.status == 'rejected' %}
+    <div class="muted-line">{{ ticket.get_status_display }}</div>
+  {% elif ticket.is_overdue %}
+    <div class="deadline-overdue">Просрочено на {{ ticket.due_at|timesince }}</div>
+  {% else %}
+    <div class="muted-line">Осталось {{ ticket.due_at|timeuntil }}</div>
+  {% endif %}
+{% else %}<span class="muted-line">Не установлен</span>{% endif %}
+
+{% if ticket.resolved_at %}
+  <div class="muted-line">Время выполнения: {{ ticket.created_at|timesince:ticket.resolved_at }}</div>
+{% endif %}

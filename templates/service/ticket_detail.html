@@ -60,6 +60,19 @@
   </div>
   <div class="col-lg-4">
     <div class="card mb-4">
+      <div class="card-header">Сроки заявки</div>
+      <div class="card-body">
+        <div class="muted-line">Создана</div>
+        <div>{{ ticket.created_at|date:"d.m.Y H:i" }}</div>
+        <div class="muted-line mt-3">Выполнить до</div>
+        {% include "service/partials/deadline.html" %}
+        {% if ticket.resolved_at %}
+          <div class="muted-line mt-3">Выполнена</div>
+          <div>{{ ticket.resolved_at|date:"d.m.Y H:i" }}</div>
+        {% endif %}
+      </div>
+    </div>
+    <div class="card mb-4">
       <div class="card-header">Оборудование</div>
       <div class="card-body">
         {% if ticket.equipment %}

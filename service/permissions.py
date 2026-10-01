@@ -1,6 +1,8 @@
 from functools import wraps
 
 from django.contrib import messages
+from django.contrib.auth.models import User
+from django.db.models import Q
 from django.shortcuts import redirect
 
 from .models import Profile
@@ -40,3 +42,17 @@ def role_required(*roles: str):
         return wrapper
 
     return decorator
+
+
+EXECUTOR_ROLES = (Profile.Role.ENGINEER, Profile.Role.ADMIN)
+
+
+def eligible_assignees():
+    return User.objects.filter(is_active=True).filter(
+        Q(profile__role__in=EXECUTOR_ROLES) | Q(is_superuser=True)
+    ).select_related("profile").order_by("last_name", "first_name", "username")
+
+
+def assignee_label(user):
+    role = "Администратор" if user.is_superuser else user.profile.get_role_display()
+    return f"{user.get_full_name() or user.username} — {role}"
