@@ -19,23 +19,25 @@
   {% endif %}
 </div>
 
+<details class="filter-panel" open data-mobile-filters data-has-filters="{% if filters.q or filters.status or filters.category or filters.location or filters.employee or filters.equipment or filters.assignee %}true{% else %}false{% endif %}">
+<summary>Поиск и фильтры{% if filters.q or filters.status or filters.category or filters.location or filters.employee or filters.equipment or filters.assignee %} · применены{% endif %}</summary>
 <form class="toolbar row g-2">
   <input type="hidden" name="sort" value="{{ sort }}">
-  <div class="col-md-4"><input class="form-control" name="q" value="{{ query }}" placeholder="Название, инв. номер, сотрудник, имя ПК, IP, программа"></div>
+  <div class="col-md-4"><input class="form-control" name="q" aria-label="Поиск оборудования" value="{{ query }}" placeholder="Название, инв. номер, сотрудник, имя ПК, IP, программа"></div>
   <div class="col-md-2">
-    <select class="form-select" name="category">
+    <select class="form-select" name="category" aria-label="Категория">
       <option value="">Все категории</option>
       {% for item in categories %}<option value="{{ item.id }}" {% if filters.category == item.id|stringformat:"s" %}selected{% endif %}>{{ item.name }}</option>{% endfor %}
     </select>
   </div>
   <div class="col-md-2">
-    <select class="form-select" name="location">
+    <select class="form-select" name="location" aria-label="Место установки">
       <option value="">Все кабинеты</option>
       {% for item in locations %}<option value="{{ item.id }}" {% if filters.location == item.id|stringformat:"s" %}selected{% endif %}>{{ item }}</option>{% endfor %}
     </select>
   </div>
   <div class="col-md-2">
-    <select class="form-select" name="status">
+    <select class="form-select" name="status" aria-label="Статус оборудования">
       <option value="">В учете (без списанных)</option>
       {% for value, label in statuses %}<option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
     </select>
@@ -50,22 +52,24 @@
   <div class="col-md-2"><button class="btn btn-outline-primary w-100">Найти</button></div>
   <div class="col-md-2"><a class="btn btn-outline-secondary w-100" href="{% url 'equipment_list' %}">Сбросить</a></div>
 </form>
-<p class="small text-muted">Нажмите на заголовок столбца для сортировки; повторное нажатие меняет направление.</p>
+</details>
+{% include "service/partials/mobile_sort.html" %}
+<p class="small text-muted desktop-only">Нажмите на заголовок столбца для сортировки; повторное нажатие меняет направление.</p>
 
 <div class="card">
   <div class="table-responsive">
-    <table class="table table-hover align-middle mb-0">
+    <table class="table table-hover align-middle mb-0 mobile-cards">
       {% include "service/partials/sort_headers.html" %}
       <tbody>
         {% for item in equipment %}
           <tr>
-            <td><a class="queue-title" href="{{ item.get_absolute_url }}">{{ item.name }}</a></td>
-            <td class="text-nowrap">{{ item.inventory_number }}</td>
-            <td>{{ item.category }}</td>
-            <td>{{ item.location }}</td>
-            <td>{% if item.assigned_user %}<a href="{% url 'equipment_list' %}?employee={{ item.assigned_user_id }}&amp;sort={{ sort }}" title="Вся техника сотрудника">{{ item.assigned_user|person }}</a>{% else %}<a href="{% url 'equipment_list' %}?employee=unassigned&amp;sort={{ sort }}">Без закрепления</a>{% endif %}</td>
-            {% if is_support %}<td>{{ item.hostname|default:"—" }}</td><td class="text-nowrap">{{ item.ip_address|default:"—" }}</td>{% endif %}
-            <td class="text-nowrap"><span class="muted-line">{{ item.get_status_display }}</span></td>
+            <td data-label="Название"><a class="queue-title" href="{{ item.get_absolute_url }}">{{ item.name }}</a></td>
+            <td data-label="Инв. номер" class="text-nowrap">{{ item.inventory_number }}</td>
+            <td data-label="Категория">{{ item.category }}</td>
+            <td data-label="Место">{{ item.location }}</td>
+            <td data-label="Сотрудник">{% if item.assigned_user %}<a href="{% url 'equipment_list' %}?employee={{ item.assigned_user_id }}&amp;sort={{ sort }}" title="Вся техника сотрудника">{{ item.assigned_user|person }}</a>{% else %}<a href="{% url 'equipment_list' %}?employee=unassigned&amp;sort={{ sort }}">Без закрепления</a>{% endif %}</td>
+            {% if is_support %}<td data-label="Имя ПК">{{ item.hostname|default:"—" }}</td><td data-label="IP" class="text-nowrap">{{ item.ip_address|default:"—" }}</td>{% endif %}
+            <td data-label="Статус" class="text-nowrap"><span class="muted-line">{{ item.get_status_display }}</span></td>
           </tr>
         {% empty %}
           <tr><td colspan="{{ headers|length }}" class="text-muted">Оборудование не найдено.</td></tr>

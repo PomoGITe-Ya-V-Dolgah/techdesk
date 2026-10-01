@@ -492,3 +492,54 @@ class TableSortingTests(TestCase):
         response = self.client.get(reverse('equipment_detail', args=[equipment.pk]))
         for key in ['software', 'history']:
             self.assertContains(response, f'data-sort-table="{key}"')
+
+
+class MobileFormsTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user('mobileoperator')
+        Profile.objects.create(user=self.user, role=Profile.Role.OPERATOR)
+        self.client.force_login(self.user)
+
+    def test_mobile_sort_form_preserves_applied_filters(self):
+        from html.parser import HTMLParser
+
+        class SortParser(HTMLParser):
+            def __init__(self):
+                super().__init__()
+                self.active = False
+                self.fields = {}
+            def handle_starttag(self, tag, attrs):
+                attrs = dict(attrs)
+                if tag == 'form':
+                    self.active = 'mobile-sort' in attrs.get('class', '')
+                if self.active and tag == 'input' and attrs.get('type') == 'hidden':
+                    self.fields[attrs['name']] = attrs['value']
+            def handle_endtag(self, tag):
+                if tag == 'form': self.active = False
+
+        for route, query in [('equipment_list', {'employee':'unassigned','status':'repair','q':'ПК & монитор','sort':'-inventory'}), ('ticket_list', {'status':'new','q':'Сеть & доступы','sort':'-due'})]:
+            response = self.client.get(reverse(route), query)
+            self.assertEqual(response.status_code, 200)
+            parser = SortParser()
+            parser.feed(response.content.decode())
+            self.assertEqual(parser.fields, {k:v for k,v in query.items() if k != 'sort'})
+            self.assertContains(response, f'value="{query["sort"]}" selected')
+
+    def test_description_has_full_width_field(self):
+        response = self.client.get(reverse('ticket_create'))
+        from html.parser import HTMLParser
+
+        class DescriptionParser(HTMLParser):
+            def __init__(self):
+                super().__init__()
+                self.wide = False
+                self.classes = ''
+            def handle_starttag(self, tag, attrs):
+                attrs = dict(attrs)
+                if tag == 'div' and 'form-field' in attrs.get('class',''):
+                    self.classes = attrs['class']
+                if tag == 'textarea' and attrs.get('name') == 'description':
+                    self.wide = 'form-field-wide' in self.classes
+        parser = DescriptionParser()
+        parser.feed(response.content.decode())
+        self.assertTrue(parser.wide)

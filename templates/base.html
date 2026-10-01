@@ -12,6 +12,7 @@
   {% if user.is_authenticated %}
     <div class="app-shell">
       <aside class="app-sidebar">
+        <div class="sidebar-heading">
         <a class="brand" href="{% url 'dashboard' %}">
           <span class="brand-mark">SD</span>
           <span>
@@ -19,6 +20,9 @@
             <small>технический отдел</small>
           </span>
         </a>
+        <button class="btn mobile-menu-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#mobile-navigation" aria-controls="mobile-navigation" aria-expanded="false">Меню</button>
+        </div>
+        <div class="sidebar-navigation collapse" id="mobile-navigation">
         <nav class="side-nav">
           <a class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}"><span class="nav-icon">⌂</span>Панель</a>
           <a class="{% if 'ticket' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'ticket_list' %}"><span class="nav-icon">▦</span>Заявки</a>
@@ -35,6 +39,11 @@
           <span class="note-dot"></span>
           {% if is_support %}QR-паспорт и база решений помогают быстрее закрывать повторные обращения.{% else %}Проблема с техникой? Создайте заявку — так она не потеряется, а статус виден здесь.{% endif %}
         </div>
+        <div class="mobile-account mobile-only">
+          <span>{{ user|person }}</span>
+          <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="btn btn-outline-light">Выйти</button></form>
+        </div>
+        </div>
       </aside>
 
       <div class="app-main">
@@ -46,11 +55,11 @@
           <div class="topbar-actions">
             <button class="btn btn-light btn-sm" type="button" data-bs-toggle="offcanvas" data-bs-target="#notification-settings" aria-controls="notification-settings">Уведомления</button>
             <a class="btn btn-primary btn-sm" href="{% url 'ticket_create' %}">Новая заявка</a>
-            <div class="user-chip">
+            <div class="user-chip desktop-account">
               <span class="avatar">{{ user.username|first|upper }}</span>
               <span>{{ user|person }}</span>
             </div>
-            <form method="post" action="{% url 'logout' %}">
+            <form class="desktop-account" method="post" action="{% url 'logout' %}">
               {% csrf_token %}
               <button class="btn btn-light btn-sm">Выйти</button>
             </form>
@@ -98,5 +107,6 @@
   {% endif %}
   <script src="{% static 'vendor/bootstrap/bootstrap.bundle.min.js' %}"></script>
   <script src="{% static 'js/table-sort.js' %}" defer></script>
+  <script src="{% static 'js/mobile-layout.js' %}" defer></script>
 </body>
 </html>

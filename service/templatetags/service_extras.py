@@ -1,4 +1,4 @@
-from django import template
+from django import template, forms
 
 register = template.Library()
 
@@ -24,3 +24,8 @@ def query_update(context, **changes):
     for key, value in changes.items():
         query[key] = str(value)
     return "?" + query.urlencode()
+
+
+@register.filter
+def is_textarea(widget):
+    return isinstance(widget, forms.Textarea)

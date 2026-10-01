@@ -11,23 +11,27 @@
   <a class="btn btn-primary" href="{% url 'ticket_create' %}">Создать заявку</a>
 </div>
 
+<details class="filter-panel" open data-mobile-filters data-has-filters="{% if filters.q or filters.status or filters.category or filters.location or filters.employee or filters.equipment or filters.assignee %}true{% else %}false{% endif %}">
+<summary>Поиск и фильтры{% if filters.q or filters.status or filters.category or filters.location or filters.employee or filters.equipment or filters.assignee %} · применены{% endif %}</summary>
 <form class="toolbar row g-2">
   <input type="hidden" name="sort" value="{{ sort }}">
-  <div class="col-md-3"><input class="form-control" name="q" value="{{ filters.q }}" placeholder="Поиск"></div>
+  <div class="col-md-3"><input class="form-control" name="q" aria-label="Поиск заявок" value="{{ filters.q }}" placeholder="Поиск"></div>
   <div class="col-md-3">
-    <select class="form-select" name="status">
+    <select class="form-select" name="status" aria-label="Статус заявки">
       <option value="">Все статусы</option>
       {% for value,label in statuses %}<option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
     </select>
   </div>
   <div class="col-md-3">
-    <select class="form-select" name="equipment">
+    <select class="form-select" name="equipment" aria-label="Оборудование">
       <option value="">Все оборудование</option>
       {% for item in equipment %}<option value="{{ item.id }}" {% if filters.equipment == item.id|stringformat:"s" %}selected{% endif %}>{{ item.name }}</option>{% endfor %}
     </select>
   </div>
   <div class="col-md-3"><button class="btn btn-outline-primary w-100">Применить</button></div>
 </form>
+</details>
+{% include "service/partials/mobile_sort.html" %}
 
 <div id="ticket-live-status" class="muted-line" role="status" aria-live="polite">Автообновление каждые 10 секунд</div>
 <div id="ticket-table" data-refresh-url="{% url 'ticket_list' %}">

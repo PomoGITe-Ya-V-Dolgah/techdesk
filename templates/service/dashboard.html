@@ -41,16 +41,16 @@
     <div class="card">
       <div class="card-header">{% if is_support %}Последние заявки{% else %}Мои заявки — открытых: {{ open_count }}{% endif %}</div>
       <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0" data-sort-table="recent">
+        <table class="mobile-cards table table-hover align-middle mb-0" data-sort-table="recent">
           <thead><tr><th data-sort-type="number">ID</th><th>Тема</th><th>Оборудование</th><th>Статус</th><th>Исполнитель</th></tr></thead>
           <tbody>
             {% for ticket in recent_tickets %}
               <tr>
-                <td>#{{ ticket.id }}</td>
-                <td><a class="queue-title" href="{{ ticket.get_absolute_url }}">{{ ticket.title }}</a></td>
-                <td><span class="muted-line">{{ ticket.equipment.name|default:"—" }}</span></td>
-                <td><span class="status-pill status-{{ ticket.status }}">{{ ticket.get_status_display }}</span></td>
-                <td><span class="muted-line">{{ ticket.assignee|default:"не назначен" }}</span></td>
+                <td data-label="ID">#{{ ticket.id }}</td>
+                <td data-label="Тема"><a class="queue-title" href="{{ ticket.get_absolute_url }}">{{ ticket.title }}</a></td>
+                <td data-label="Оборудование"><span class="muted-line">{{ ticket.equipment.name|default:"—" }}</span></td>
+                <td data-label="Статус"><span class="status-pill status-{{ ticket.status }}">{{ ticket.get_status_display }}</span></td>
+                <td data-label="Исполнитель"><span class="muted-line">{{ ticket.assignee|default:"не назначен" }}</span></td>
               </tr>
             {% empty %}
               <tr><td colspan="5" class="text-muted">Заявок пока нет.</td></tr>

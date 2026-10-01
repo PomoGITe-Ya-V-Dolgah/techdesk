@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load service_extras %}
 
 {% block title %}{{ title }}{% endblock %}
 
@@ -21,7 +22,7 @@
 
       <div class="form-grid">
         {% for field in form %}
-          <div class="form-field {% if field.field.widget.input_type == 'textarea' %}form-field-wide{% endif %}">
+          <div class="form-field {% if field.field.widget|is_textarea %}form-field-wide{% endif %}">
             {% if field.field.widget.input_type == 'radio' %}
               <fieldset class="status-options">
                 <legend class="form-label">{{ field.label }}</legend>

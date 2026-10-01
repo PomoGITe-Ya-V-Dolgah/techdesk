@@ -71,16 +71,16 @@
     <div class="card mb-4">
       <div class="card-header">Установленное ПО</div>
       <div class="table-responsive">
-        <table class="table mb-0" data-sort-table="software">
+        <table class="mobile-cards table mb-0" data-sort-table="software">
           <thead><tr><th>Программа</th><th>Версия</th><th data-sort-type="date">Лицензия до</th>{% if can_edit_registry %}<th data-sort-disabled></th>{% endif %}</tr></thead>
           <tbody>
             {% for inst in installations %}
               <tr>
-                <td>{{ inst.software.name }}</td>
-                <td>{{ inst.version|default:"—" }}</td>
-                <td data-sort-value="{{ inst.license_until|date:'Y-m-d' }}">{{ inst.license_until|date:"d.m.Y"|default:"—" }}</td>
+                <td data-label="Программа">{{ inst.software.name }}</td>
+                <td data-label="Версия">{{ inst.version|default:"—" }}</td>
+                <td data-label="Лицензия до" data-sort-value="{{ inst.license_until|date:'Y-m-d' }}">{{ inst.license_until|date:"d.m.Y"|default:"—" }}</td>
                 {% if can_edit_registry %}
-                <td class="text-end">
+                <td data-label="Действия" class="text-end">
                   <form method="post" action="{% url 'equipment_software_remove' equipment.pk inst.pk %}">
                     {% csrf_token %}<button class="btn btn-sm btn-light">Убрать</button>
                   </form>
@@ -109,15 +109,15 @@
     <div class="card mb-4">
       <div class="card-header">История заявок</div>
       <div class="table-responsive">
-        <table class="table table-hover mb-0" data-sort-table="history">
+        <table class="mobile-cards table table-hover mb-0" data-sort-table="history">
           <thead><tr><th data-sort-type="number">ID</th><th>Тема</th><th>Статус</th><th>Решение</th></tr></thead>
           <tbody>
             {% for ticket in tickets %}
               <tr>
-                <td>#{{ ticket.id }}</td>
-                <td><a class="queue-title" href="{{ ticket.get_absolute_url }}">{{ ticket.title }}</a></td>
-                <td><span class="status-pill status-{{ ticket.status }}">{{ ticket.get_status_display }}</span></td>
-                <td>{{ ticket.resolution_summary|truncatechars:90|default:"-" }}</td>
+                <td data-label="ID">#{{ ticket.id }}</td>
+                <td data-label="Тема"><a class="queue-title" href="{{ ticket.get_absolute_url }}">{{ ticket.title }}</a></td>
+                <td data-label="Статус"><span class="status-pill status-{{ ticket.status }}">{{ ticket.get_status_display }}</span></td>
+                <td data-label="Решение">{{ ticket.resolution_summary|truncatechars:90|default:"-" }}</td>
               </tr>
             {% empty %}
               <tr><td colspan="4" class="text-muted">История пока пустая.</td></tr>

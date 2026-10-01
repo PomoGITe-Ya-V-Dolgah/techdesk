@@ -1,20 +1,20 @@
 <div class="card">
   <div class="table-responsive">
-    <table class="table table-hover align-middle mb-0">
+    <table class="table table-hover align-middle mb-0 mobile-cards">
       {% include "service/partials/sort_headers.html" %}
       <tbody>
         {% for ticket in tickets %}
           <tr class="{% if ticket.is_overdue %}table-warning{% endif %}">
-            <td>#{{ ticket.id }}</td>
-            <td>
+            <td data-label="ID">#{{ ticket.id }}</td>
+            <td data-label="Тема">
               <a class="queue-title" href="{{ ticket.get_absolute_url }}">{{ ticket.title }}</a>
             </td>
-            <td class="text-nowrap">{{ ticket.created_at|date:"d.m.Y H:i" }}</td>
-            <td>{% if ticket.equipment %}<a href="{{ ticket.equipment.get_absolute_url }}">{{ ticket.equipment.name }}</a>{% else %}<span class="muted-line">—</span>{% endif %}</td>
-            <td><span class="status-pill status-{{ ticket.status }}">{{ ticket.get_status_display }}</span></td>
-            <td><span class="priority-pill priority-{{ ticket.priority }}">{{ ticket.get_priority_display }}</span></td>
-            <td><span class="muted-line">{{ ticket.assignee|default:"не назначен" }}</span></td>
-            <td>{% include "service/partials/deadline.html" %}</td>
+            <td data-label="Создана" class="text-nowrap">{{ ticket.created_at|date:"d.m.Y H:i" }}</td>
+            <td data-label="Оборудование">{% if ticket.equipment %}<a href="{{ ticket.equipment.get_absolute_url }}">{{ ticket.equipment.name }}</a>{% else %}<span class="muted-line">—</span>{% endif %}</td>
+            <td data-label="Статус"><span class="status-pill status-{{ ticket.status }}">{{ ticket.get_status_display }}</span></td>
+            <td data-label="Приоритет"><span class="priority-pill priority-{{ ticket.priority }}">{{ ticket.get_priority_display }}</span></td>
+            <td data-label="Исполнитель"><span class="muted-line">{{ ticket.assignee|default:"не назначен" }}</span></td>
+            <td data-label="Выполнить до">{% include "service/partials/deadline.html" %}</td>
           </tr>
         {% empty %}
           <tr><td colspan="{{ headers|length }}" class="text-muted">Заявки не найдены.</td></tr>

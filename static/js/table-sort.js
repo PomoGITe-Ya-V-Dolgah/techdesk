@@ -8,8 +8,31 @@
     const parameter = `sort_${table.dataset.sortTable}`;
     let active = -1, descending = false;
     const buttons = [];
+    const wrapper = document.createElement('div');
+    wrapper.className = 'mobile-sort mobile-only';
+    const label = document.createElement('label');
+    label.className = 'form-label'; label.htmlFor = `sort-${table.dataset.sortTable}`;
+    label.textContent = 'Сортировка';
+    const select = document.createElement('select');
+    select.id = label.htmlFor; select.className = 'form-select';
+    const placeholder = new Option('Порядок по умолчанию', '');
+    placeholder.disabled = true; select.add(placeholder);
+    headers.forEach((header, index) => {
+      if (header.hasAttribute('data-sort-disabled')) return;
+      select.add(new Option(`${header.textContent.trim()} ↑`, `${index}:asc`));
+      select.add(new Option(`${header.textContent.trim()} ↓`, `${index}:desc`));
+    });
+    select.value = '';
+    select.addEventListener('change', () => {
+      const [index, direction] = select.value.split(':');
+      sort(Number(index), direction === 'desc', true);
+    });
+    wrapper.append(label, select);
+    table.closest('.table-responsive')?.before(wrapper);
+    if (!wrapper.isConnected) table.before(wrapper);
     function sort(index, reverse, updateUrl) {
       active = index; descending = reverse;
+      select.value = `${index}:${reverse ? "desc" : "asc"}`;
       const rows = [...body.rows].filter(row => row.cells.length === headers.length && !row.cells[0].hasAttribute('colspan'));
       function value(row) {
         const cell = row.cells[index];

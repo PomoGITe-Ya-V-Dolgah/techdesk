@@ -680,3 +680,70 @@ a {
 .table-sort-button { border: 0; padding: 0; background: transparent; color: inherit; font: inherit; text-align: inherit; cursor: pointer; white-space: nowrap; }
 .table-sort-button:hover { color: #2454d6; text-decoration: underline; }
 .table-sort-button:focus-visible { outline: 2px solid #2454d6; outline-offset: 4px; border-radius: 2px; }
+
+/* Мобильная навигация и представление таблиц карточками. */
+.mobile-only, .mobile-menu-toggle { display: none; }
+.filter-panel > summary { display: none; }
+@media (min-width: 993px) {
+  .sidebar-navigation.collapse { display: block !important; }
+}
+@media (max-width: 992px) {
+  .app-sidebar { padding: 12px 16px; }
+  .sidebar-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .brand { margin: 0; }
+  .brand small { display: none; }
+  .mobile-menu-toggle { display: inline-flex; color: #fff; border: 1px solid #64748b; min-height: 44px; align-items: center; }
+  .side-nav { margin-top: 16px; }
+  .side-nav a { min-height: 44px; }
+  .mobile-account { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-top: 16px; overflow-wrap: anywhere; }
+  .mobile-account span { min-width: 0; }
+  .mobile-account form { flex-shrink: 0; }
+  .topbar { padding: 10px 16px; min-height: 64px; }
+  .topbar-search, .desktop-account { display: none; }
+  .topbar-actions { justify-content: space-between; flex-wrap: nowrap; width: 100%; }
+  .topbar-actions .btn { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+}
+@media (max-width: 992px) {
+  .mobile-only { display: block; }
+  .mobile-account { display: flex; }
+  .desktop-only { display: none; }
+  .content-shell { padding: 16px; }
+  table td, .list-group-item { overflow-wrap: anywhere; }
+  .page-head { display: block; }
+  .page-head > .btn, .page-head > .btn-group { margin-top: 12px; width: 100%; }
+  .page-head .d-flex { justify-content: flex-start !important; margin-top: 12px; }
+  .page-head .d-flex > .btn { flex: 1 1 130px; width: auto; margin-top: 0; }
+  .page-title, .form-card-head h1 { font-size: 24px; overflow-wrap: anywhere; }
+  .btn { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+  .form-control, .form-select, .app-form .form-control, .app-form .form-select { font-size: 16px; min-height: 44px; }
+  .form-grid { grid-template-columns: minmax(0, 1fr); }
+  .form-card-head { padding: 20px 18px 16px; }
+  .app-form { padding: 20px 18px; }
+  .form-actions { flex-wrap: wrap; }
+  .form-actions > .btn { flex: 1; }
+  .status-option { min-height: 44px; padding: 4px; }
+  .status-option input { width: 20px; height: 20px; }
+  .filter-panel { margin-bottom: 16px; border: 1px solid var(--border); border-radius: 8px; background: white; }
+  .filter-panel > summary { display: list-item; min-height: 44px; padding: 12px 16px; cursor: pointer; font-weight: 600; }
+  .filter-panel .toolbar { margin: 0; border: 0; padding: 0 12px 16px; }
+  .mobile-sort { padding: 12px 16px; margin-bottom: 12px; background: white; border-radius: 8px; }
+  .mobile-sort select { min-width: 0; }
+  .mobile-sort .btn { flex-shrink: 0; }
+  .mobile-cards { display: block; width: 100%; }
+  .mobile-cards thead { display: none; }
+  .mobile-cards tbody { display: block; }
+  .mobile-cards tr { display: block; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+  .mobile-cards td { display: block; width: 100%; border: 0; padding: 6px 0; white-space: normal !important; overflow-wrap: anywhere; }
+  .mobile-cards td[data-label]::before { content: attr(data-label); display: block; margin-bottom: 2px; color: var(--muted); font-size: 12px; font-weight: 600; }
+  .mobile-cards .queue-title { display: block; font-size: 16px; padding: 4px 0; }
+  .mobile-cards td a { display: inline-block; min-height: 44px; padding: 4px 0; }
+  .mobile-cards td .queue-title { display: block; }
+  .ticket-notice { left: 12px; right: 12px; bottom: 12px; max-width: none; padding: 12px; overflow-wrap: anywhere; }
+  .ticket-notice .btn-close { min-width: 36px; min-height: 36px; }
+  .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .metric { padding: 14px; }
+  .metric-value { font-size: 28px; }
+}
+@media print {
+  .mobile-sort, .filter-panel { display: none !important; }
+}
